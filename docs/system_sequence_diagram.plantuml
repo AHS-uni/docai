@@ -1,0 +1,122 @@
+@startuml
+title DocAI System Sequence Diagram
+header DocAI – End-to-End Flow
+
+autonumber
+
+actor User
+
+participant "API Gateway" as API
+participant "Task Manager / Master Service" as TM
+participant "Ingestion Service" as Ingest
+participant "Document Storage\n(File System)" as Storage
+participant "Relational DB" as RDB
+participant "Retrieval Service" as Retrieval
+participant "Vector DB\n(Vector Store)" as VDB
+participant "Generation Service" as Gen
+
+'----------------------------------------------------------
+' Note: All inter-service communication uses asynchronous messaging (via Message Queues).
+' The Ingestion Service creates full Document and Query objects (with IDs).
+' The Task Manager (TM) records state transitions based on explicit acknowledgments.
+' For answer generation to occur, both the Query and all associated Documents must be in state "indexed".
+' The Context Retrieval phase verifies this and then updates the Query state to "context-retrieved".
+'----------------------------------------------------------
+
+'-------------------- Document Ingestion --------------------
+group "Document Ingestion"
+User -> API: Upload Raw Document (e.g., PDF)
+API -> TM: Forward Raw Document
+TM -> Ingest: Send Raw Document Data\n(via Message Queue)
+note right of Ingest: Create Document Object with metadata:\n{id, file_name, pages, state:"created"}
+Ingest --> TM: Ack with Document Object (state:"created")
+note right of TM: Document {doc_id} now in state "created"
+
+' Process document: conversion, metadata extraction, and storage
+Ingest -> Ingest: Process Document (convert to images, generate metadata)
+Ingest -> Storage: Store Original PDF & Page Images
+Ingest -> RDB: Persist Detailed Document Object
+Ingest --> TM: Notify Document Processed
+note right of TM: Update Document {doc_id} state to "processed"
+end
+
+'-------------------- Document Indexing --------------------
+group "Document Indexing"
+TM -> Retrieval: Initiate Indexing for Processed Document {doc_id}
+Retrieval -> Storage: Request Page Images for Document {doc_id}
+Storage --> Retrieval: Return Page Images
+Retrieval -> VDB: Generate & Store Embeddings for each page
+VDB --> Retrieval: Confirm Embeddings Stored
+Retrieval --> TM: Notify Document Indexed
+note right of TM: Update Document {doc_id} state to "indexed"
+end
+
+'-------------------- Query Ingestion --------------------
+group "Query Ingestion"
+User -> API: Submit Query Text
+API -> TM: Forward Raw Query
+TM -> Ingest: Send Raw Query Data\n(via Message Queue)
+note right of Ingest: Create Query Object with metadata:\n{id, text, state:"created"}
+Ingest --> TM: Ack with Query Object (state:"created")
+note right of TM: Query {query_id} now in state "created"
+
+' Associate query with available Document IDs
+Ingest -> RDB: Retrieve list of Documents created prior to Query {query_id}
+RDB --> Ingest: Return Document IDs list [doc_id1, doc_id2, ...]
+note right of Ingest: Associate Query {query_id} with these Document IDs
+
+' Process query: enrichment, validations, and persistence
+Ingest -> Ingest: Process Query Data
+Ingest -> RDB: Persist Detailed Query Object
+Ingest --> TM: Notify Query Processed
+note right of TM: Update Query {query_id} state to "processed"
+
+
+end
+
+'-------------------- Query Indexing --------------------
+group "Query Indexing"
+TM -> Retrieval: Initiate Indexing for Processed Query {query_id}
+Retrieval -> RDB: Request Query Object for {query_id}
+RDB --> Retrieval: Return Query Object
+Retrieval -> VDB: Generate & Store Embedding for Query
+Retrieval --> TM: Notify Query Indexed
+VDB --> Retrieval: Confirm Query Embedding Stored
+note right of TM: Update Query {query_id} state to "indexed"
+end
+
+'-------------------- Context Retrieval --------------------
+group "Context Retrieval"
+' Verify that all documents associated with the query are in state "indexed"
+TM -> RDB: Check states for associated Documents [doc_id1, doc_id2, ...]
+RDB --> TM: Return Document States
+alt One or more Documents not indexed
+note right of TM: Context retrieval blocked due to incomplete document indexing
+TM --> API: Return "Documents processing. Please wait..."
+else All Documents are indexed
+TM -> Retrieval: Initiate Context Reitrieval for Indexed Query {query_id}
+Retrieval -> VDB: Request Similarity Search for Query {query_id}
+VDB -> VDB: Perform Similarity Search with indexed documents
+note right of VDB: Returns list of relevant Document/Page IDs
+VDB --> Retrieval: Return relevant IDs
+Retrieval -> RDB: Persist Query Context (retrieved IDs)
+Retrieval --> TM: Notify Query Contect Retrieved
+note right of TM: Update Query {query_id} state to "context-retrieved"
+end
+end
+
+'-------------------- Answer Generation --------------------
+group "Answer Generation"
+TM -> Gen: Initiate Answer Generation for {query_id}
+Gen -> RDB: Request Query Object
+RDB --> Gen: Return Query
+Gen -> Storage: Request Page Images for context IDs
+Storage --> Gen: Return Page Images
+Gen -> Gen: Generate Answer using Provided Context
+Gen --> TM: Return Generated Answer
+note right of TM: Update Query {query_id} state to "answered"
+TM --> API: Forward Final Answer to User
+API --> User: Deliver Generated Answer
+end
+
+@enduml

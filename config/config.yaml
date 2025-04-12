@@ -1,0 +1,18 @@
+---
+ingestion:
+    pdf_conversion:
+         dpi: 100
+         quality: 50
+    paths:
+         input_dir: "data/pdfs"
+         image_output_dir: "data/images"
+         metadata_output: "data/documents"  # metadata (JSON)
+         log_file: "logs/ingestion_service.log"
+
+
+storage:
+    base_path: "data"
+    host: "0.0.0.0"
+    port: 8000
+    log_file: "logs/storage_service.log"
+...
