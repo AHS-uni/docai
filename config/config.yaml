@@ -9,10 +9,15 @@ ingestion:
          metadata_output: "data/documents"  # metadata (JSON)
          log_file: "logs/ingestion_service.log"
 
-
 storage:
     base_path: "data"
     host: "0.0.0.0"
     port: 8000
     log_file: "logs/storage_service.log"
+
+database:
+    url: "postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+    pool_size: 10
+    max_overflow: 5
+    log_file: "logs/database_service.log"
 ...

@@ -20,9 +20,9 @@ def get_storage_config() -> Dict[str, Any]:
     return storage_config
 
 
-# Load configuration at module level
 load_environment()
 _storage_config = get_storage_config()
+
 BASE_PATH = Path(_storage_config.get("base_path", "data"))
 HOST = _storage_config.get("host", "0.0.0.0")
 PORT = _storage_config.get("port", 8000)

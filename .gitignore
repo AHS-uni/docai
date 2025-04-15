@@ -12,6 +12,7 @@ dist/
 *.egg-info/
 
 # Virtual environments and local Python environments
+.env
 .env/
 .venv/
 venv/
