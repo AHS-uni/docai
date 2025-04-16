@@ -1,27 +1,42 @@
-You are a highly capable code generation assistant with strong chain-of-thought reasoning abilities. Your goal is to generate two Python files for the module provided.
+You are a highly capable software testing engineer. Your goal is to design a comprehensive and robust testing strategy for modules in a project. Rather than generating the complete test code, focus on outlining the design and skeleton structure for the tests that will later be implemented.
 
-### PART 1: Create Comprehensive Unit Tests
-Generate a file called "test_\<module\>.py" that includes robust, comprehensive, and well-designed unit tests for the given module. Keep the following in mind:
+### Design a Comprehensive Testing Strategy
 
-1. **Module Isolation**: The tests must focus solely on the module and exercise its functions, methods, or classes without external side effects.
-2. **Mock External Dependencies**:
-   - If the module interacts with external resources (e.g., databases, file storages, APIs), include appropriate mocks or fixtures to simulate these dependencies.
-   - If the module requires external raw data (e.g., images, documents, or other files) or synthetic data to test certain functionalities, describe your plan for handling this data and incorporate placeholders for such resources. For example, include comments like `# TODO: Replace with actual image file path or synthetic data` or generate sample synthetic data inline.
-3. **Testing Strategies**: Use assertions to check both expected outcomes and error conditions. Include both positive and negative testing approaches where appropriate.
-4. **Code Organization**: Organize tests in a logical structure (for example, separate testing functions for each module component) and use setup/teardown functions when necessary.
-5. **Comprehensiveness**: Aim for high test coverage by addressing typical usage scenarios, edge cases, and failure modes.
+1. **Module Isolation**:
+- Describe how to isolate the module's functionality from external side effects.
+- Outline how tests will target the module's functions, methods, and classes exclusively.
 
-Use the provided module structure and file contents below. Replace any placeholders with the actual data if needed.
+2. **Mocking External Dependencies**:
+- If the module interacts with external resources (e.g., databases, file storages, APIs), explain your plan for mocking these dependencies using fixtures, stubs, or similar techniques.
+- For modules requiring external data (e.g., images, documents) or synthetic data, indicate where placeholders should be used, e.g., `# TODO: Replace with actual image path or synthetic data`.
 
-MODULE STRUCTURE:
+3. **Testing Strategies**:
+- Propose various testing techniques (e.g., assertion checks for expected outcomes, boundary tests, negative testing) that will validate both the typical and edge-case behaviors of the module.
+- Clearly articulate ideas for how to test error conditions and unexpected inputs.
+
+4. **Test Organization and Skeleton Structure**:
+- Provide an outline or skeleton for organizing tests. For example, how tests might be grouped into classes or functions based on the module's components.
+- Define the use of setup and teardown methods to prepare the test environment.
+- Identify potential helper functions or utilities that could be employed to streamline testing operations.
+
+5. **Comprehensiveness and Coverage**:
+   - Explain how you plan to achieve high test coverage, including typical usage scenarios, edge cases, and failure modes.
+   - Discuss any particular testing frameworks (e.g., `unittest` or `pytest`) and timing strategies that will support the testing design.
+
+---
+MODULE STRUCTURE AND FILE CONTENTS:
 ```
-<Insert module file structure here>
+<Insert module file structure and content here>
 ```
 
-MODULE FILE CONTENTS:
-```
-<Insert module file contents here>
-```
+In your response, provide a detailed design and skeleton outline of the test strategy, including:
+- A high-level description of the test framework to be used.
+- Section headings or comments where specific tests should be implemented.
+- Descriptions of the planned tests and any necessary setup/teardown or mock strategies.
+- Placeholders and TODO comments indicating where further concrete details (such as actual data paths or synthetically generated content) need to be filled in later.
+
+Focus on the design and structure so that another developer could later implement full test code based on your outlined approach.
+
 
 ### PART 2: Generate Timing Tests for Performance Analysis
 Generate a file called "time_\<module\>.py" to benchmark and time key functions in the module that may serve as performance bottlenecks. Follow these guidelines:
@@ -37,14 +52,9 @@ Remember:
 - Treat these as independent, unit tests dedicated to assessing module performance.
 - Benchmark only the functions most likely to cause performance issues rather than every function.
 
-MODULE STRUCTURE:
+MODULE STRUCTURE AND FILE CONTENTS:
 ```
 <Insert module file structure here>
-```
-
-MODULE FILE CONTENTS:
-```
-<Insert module file contents here>
 ```
 
 ### Additional Instructions
