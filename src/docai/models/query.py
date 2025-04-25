@@ -54,8 +54,9 @@ class Query:
         context_retrieved_at (Optional[datetime]): Timestamp when query context was retrieved.
         answered_at (Optional[datetime]): Timestamp when the final answer was generated.
         _status (QueryStatus): Current state of the query.
-        metadata (dict): Additional metadata for the query.
+        extra (dict): Additional metadata for the query.
         target_document_ids (List[str]): List of document IDs available at the time of submission.
+        context_page_ids (Optional[List[str]]): List of retrieved page IDs.
         answer (Optional[str]): The generated answer (if available).
     """
 
@@ -64,7 +65,7 @@ class Query:
         query_id: str,
         text: str,
         target_document_ids: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Initializes a Query object.
@@ -73,7 +74,7 @@ class Query:
             query_id (str): Unique identifier for the query.
             text (str): Raw query text.
             target_document_ids (Optional[List[str]], optional): List of document IDs linked with the query.
-            metadata (Optional[Dict[str, Any]], optional): Additional metadata for the query.
+            extra (Optional[Dict[str, Any]], optional): Additional metadata for the query.
         """
         self.id: str = query_id
         self.text: str = text
@@ -83,10 +84,11 @@ class Query:
         self.context_retrieved_at: Optional[datetime] = None
         self.answered_at: Optional[datetime] = None
         self._status: QueryStatus = QueryStatus.CREATED
-        self.metadata: Dict[str, Any] = metadata if metadata is not None else {}
+        self.extra: Dict[str, Any] = extra if extra is not None else {}
         self.target_document_ids: List[str] = (
             target_document_ids if target_document_ids is not None else []
         )
+        self.context_page_ids: Optional[List[str]] = None
         self.answer: Optional[str] = None
 
     @property
@@ -178,7 +180,7 @@ class Query:
                 self.answered_at.isoformat() + "Z" if self.answered_at else None
             ),
             "status": self.status.value,
-            "metadata": self.metadata,
+            "extra": self.extra,
             "target_document_ids": self.target_document_ids,
             "answer": self.answer,
         }
@@ -188,10 +190,10 @@ class Query:
         Saves the Query details to a JSON file.
 
         Args:
-            save_path (Path): The directory in which to save the metadata file.
+            save_path (Path): The directory in which to save the JSON file.
         """
         save_path.mkdir(parents=True, exist_ok=True)
         file_path = save_path / f"{self.id}.json"
         with open(file_path, "w") as f:
             json.dump(self.to_dict(), f, indent=4)
-            print(f"Query metadata saved to {file_path}")
+            print(f"Query object saved to {file_path}")

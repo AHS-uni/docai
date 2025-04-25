@@ -50,7 +50,7 @@ class Document:
         processed_at (Optional[datetime]): Timestamp when processing completed.
         indexed_at (Optional[datetime]): Timestamp when the document was indexed.
         _status (DocumentStatus): Current status of the document.
-        metadata (dict): Additional metadata for the document.
+        extra (dict): Additional metadata for the document.
         pages (List[Page]): A list of Page objects.
     """
 
@@ -59,7 +59,7 @@ class Document:
         doc_id: str,
         file_name: str,
         pages: Optional[List["Page"]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Initializes a Document object with default values.
@@ -68,7 +68,7 @@ class Document:
             doc_id (str): Unique identifier for the document.
             file_name (str): Name of the original PDF file.
             pages (Optional[List[Page]], optional): A list of Page objects. Defaults to None.
-            metadata (Optional[dict], optional): Additional metadata for the document. Defaults to None.
+            extra (Optional[dict], optional): Additional metadata for the document. Defaults to None.
         """
         self.id: str = doc_id
         self.file_name: str = file_name
@@ -76,7 +76,7 @@ class Document:
         self._status: DocumentStatus = DocumentStatus.CREATED
         self.processed_at: Optional[datetime] = None
         self.indexed_at: Optional[datetime] = None
-        self.metadata: Dict[str, Any] = metadata if metadata is not None else {}
+        self.extra: Dict[str, Any] = extra if extra is not None else {}
         self.pages: List[Page] = pages if pages is not None else []
 
     @property
@@ -146,7 +146,7 @@ class Document:
                 self.indexed_at.isoformat() + "Z" if self.indexed_at else None
             ),
             "status": self.status.value,
-            "metadata": self.metadata,
+            "extra": self.extra,
             "pages": [page.to_dict() for page in self.pages],
         }
 
@@ -155,13 +155,13 @@ class Document:
         Persists the Document data as a JSON file.
 
         Args:
-            save_path (Path): Directory where the document metadata file will be saved.
+            save_path (Path): Directory where the JSON file will be saved.
         """
         save_path.mkdir(parents=True, exist_ok=True)
         file_path = save_path / f"{self.id}.json"
         with open(file_path, "w") as f:
             json.dump(self.to_dict(), f, indent=4)
-            print(f"Document metadata saved to {file_path}")
+            print(f"Document object saved to {file_path}")
 
 
 class Page:
