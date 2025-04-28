@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from docai.database.models import Base
-from docai.database.config import DB_URL, POOL_SIZE, MAX_OVERFLOW, LOG_FILE
+from docai.database.config import DB_URL, POOL_SIZE, MAX_OVERFLOW
 
 engine = create_engine(
     DB_URL,
@@ -21,10 +21,6 @@ def init_db() -> None:
     Raises:
         Exception: If an error occurs during table creation.
     """
-    from docai.database.models import (
-        Base,
-    )
-
     try:
         Base.metadata.create_all(bind=engine)
     except Exception as e:

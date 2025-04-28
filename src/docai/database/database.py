@@ -1,14 +1,17 @@
+"""
+`DatabaseService` encapsulates all CRUD operations for Document, Page, and Query.
+
+Each method manages its own session, commits or rolls back, and logs appropriately.
+"""
+
 import logging
 from typing import List, Optional, Any
+
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from docai.database.session import SessionLocal
-from docai.database.models import (
-    Document as ORMDocument,
-    Query as ORMQuery,
-    Page as ORMPage,
-)
+from docai.database.models import Document, Query, Page
 
 logger = logging.getLogger(__name__)
 
@@ -39,15 +42,15 @@ class DatabaseService:
 
     # --- Document CRUD Operations --- #
 
-    def create_document(self, document: ORMDocument) -> ORMDocument:
+    def create_document(self, document: Document) -> Document:
         """
         Persists a new Document record to the database.
 
         Args:
-            document (ORMDocument): The ORM Document instance to save.
+            document (Document): The ORM Document instance to save.
 
         Returns:
-            ORMDocument: The persisted document with any auto-generated fields.
+            Document: The persisted document with any auto-generated fields.
         """
         session: Session = self.get_session()
         try:
@@ -63,7 +66,7 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_document(self, doc_id: str) -> Optional[ORMDocument]:
+    def get_document(self, doc_id: str) -> Optional[Document]:
         """
         Retrieves a Document record by its ID.
 
@@ -71,13 +74,11 @@ class DatabaseService:
             doc_id (str): The unique identifier for the document.
 
         Returns:
-            Optional[ORMDocument]: The document if found, otherwise None.
+            Optional[Document]: The document if found, otherwise None.
         """
         session: Session = self.get_session()
         try:
-            document = (
-                session.query(ORMDocument).filter(ORMDocument.id == doc_id).first()
-            )
+            document = session.query(Document).filter(Document.id == doc_id).first()
             if document:
                 logger.info("Retrieved document with ID: %s", doc_id)
             else:
@@ -89,7 +90,7 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_documents_by_ids(self, document_ids: List[str]) -> List[ORMDocument]:
+    def get_documents_by_ids(self, document_ids: List[str]) -> List[Document]:
         """
         Retrieves Document records that match the provided list of document IDs.
 
@@ -97,7 +98,7 @@ class DatabaseService:
             document_ids (List[str]): The list of document IDs to retrieve.
 
         Returns:
-            List[ORMDocument]: A list of matching ORM Document instances.
+            List[Document]: A list of matching ORM Document instances.
 
         Raises:
             ValueError: If one or more document IDs cannot be found.
@@ -105,9 +106,7 @@ class DatabaseService:
         session: Session = self.get_session()
         try:
             documents = (
-                session.query(ORMDocument)
-                .filter(ORMDocument.id.in_(document_ids))
-                .all()
+                session.query(Document).filter(Document.id.in_(document_ids)).all()
             )
 
             # Validate that the expected documents were found
@@ -127,16 +126,16 @@ class DatabaseService:
         finally:
             session.close()
 
-    def list_documents(self) -> List[ORMDocument]:
+    def list_documents(self) -> List[Document]:
         """
         Lists all Document records.
 
         Returns:
-            List[ORMDocument]: A list of all Document records.
+            List[Document]: A list of all Document records.
         """
         session: Session = self.get_session()
         try:
-            documents = session.query(ORMDocument).all()
+            documents = session.query(Document).all()
             logger.info("Listed %d documents", len(documents))
             return documents
         except Exception as e:
@@ -157,9 +156,7 @@ class DatabaseService:
         """
         session: Session = self.get_session()
         try:
-            document = (
-                session.query(ORMDocument).filter(ORMDocument.id == doc_id).first()
-            )
+            document = session.query(Document).filter(Document.id == doc_id).first()
             if document is None:
                 logger.error("Document with ID %s not found for deletion", doc_id)
                 raise ValueError("Document not found")
@@ -175,7 +172,7 @@ class DatabaseService:
 
     # --- Page Retrieval Operations --- #
 
-    def get_page(self, page_id: str) -> Optional[ORMPage]:
+    def get_page(self, page_id: str) -> Optional[Page]:
         """
         Retrieves a Page record by its ID.
 
@@ -183,11 +180,11 @@ class DatabaseService:
             page_id (str): The unique identifier for the page image.
 
         Returns:
-            Optional[ORMPage]: The page image if found, else None.
+            Optional[Page]: The page image if found, else None.
         """
         session: Session = self.get_session()
         try:
-            page = session.query(ORMPage).filter(ORMPage.id == page_id).first()
+            page = session.query(Page).filter(Page.id == page_id).first()
             if page:
                 logger.info("Retrieved page with ID: %s", page_id)
             else:
@@ -199,7 +196,7 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_pages_by_ids(self, page_ids: List[str]) -> List[ORMPage]:
+    def get_pages_by_ids(self, page_ids: List[str]) -> List[Page]:
         """
         Retrieves Page records that match the provided list of page IDs.
 
@@ -207,14 +204,14 @@ class DatabaseService:
             page_ids (List[str]): The list of page IDs to retrieve.
 
         Returns:
-            List[ORMPage]: A list of matching ORM Page instances.
+            List[Page]: A list of matching ORM Page instances.
 
         Raises:
             ValueError: If one or more page IDs cannot be found.
         """
         session: Session = self.get_session()
         try:
-            pages = session.query(ORMPage).filter(ORMPage.id.in_(page_ids)).all()
+            pages = session.query(Page).filter(Page.id.in_(page_ids)).all()
             found_ids = {page.id for page in pages}
             missing_ids = set(page_ids) - found_ids  # type: ignore
             if missing_ids:
@@ -230,16 +227,16 @@ class DatabaseService:
         finally:
             session.close()
 
-    def list_pages(self) -> List[ORMPage]:
+    def list_pages(self) -> List[Page]:
         """
         Retrieves all Page records from the database.
 
         Returns:
-            List[ORMPage]: A list of page image records.
+            List[Page]: A list of page image records.
         """
         session: Session = self.get_session()
         try:
-            pages = session.query(ORMPage).all()
+            pages = session.query(Page).all()
             logger.info("Listed %d pages", len(pages))
             return pages
         except Exception as e:
@@ -250,15 +247,15 @@ class DatabaseService:
 
     # --- Query CRUD Operations --- #
 
-    def create_query(self, query: ORMQuery) -> ORMQuery:
+    def create_query(self, query: Query) -> Query:
         """
         Persists a new Query record to the database.
 
         Args:
-            query (ORMQuery): The ORM Query instance to save.
+            query (Query): The ORM Query instance to save.
 
         Returns:
-            ORMQuery: The persisted query with updated fields.
+            Query: The persisted query with updated fields.
         """
         session: Session = self.get_session()
         try:
@@ -274,7 +271,7 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_query(self, query_id: str) -> Optional[ORMQuery]:
+    def get_query(self, query_id: str) -> Optional[Query]:
         """
         Retrieves a Query record by its ID.
 
@@ -282,11 +279,11 @@ class DatabaseService:
             query_id (str): The unique identifier for the query.
 
         Returns:
-            Optional[ORMQuery]: The query record if found, otherwise None.
+            Optional[Query]: The query record if found, otherwise None.
         """
         session: Session = self.get_session()
         try:
-            query = session.query(ORMQuery).filter(ORMQuery.id == query_id).first()
+            query = session.query(Query).filter(Query.id == query_id).first()
             if query:
                 logger.info("Retrieved query with ID: %s", query_id)
             else:
@@ -298,7 +295,7 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_queries_by_ids(self, query_ids: List[str]) -> List[ORMQuery]:
+    def get_queries_by_ids(self, query_ids: List[str]) -> List[Query]:
         """
         Fetches ORM Query records that match the provided list of query IDs.
 
@@ -306,14 +303,14 @@ class DatabaseService:
             query_ids (List[str]): The list of query IDs to retrieve.
 
         Returns:
-            List[ORMQuery]: A list of matching ORM Query instances.
+            List[Query]: A list of matching ORM Query instances.
 
         Raises:
             ValueError: If one or more query IDs cannot be found.
         """
         session: Session = self.get_session()
         try:
-            queries = session.query(ORMQuery).filter(ORMQuery.id.in_(query_ids)).all()
+            queries = session.query(Query).filter(Query.id.in_(query_ids)).all()
             found_ids = {query.id for query in queries}
             missing_ids = set(query_ids) - found_ids  # type: ignore
             if missing_ids:
@@ -329,16 +326,16 @@ class DatabaseService:
         finally:
             session.close()
 
-    def list_queries(self) -> List[ORMQuery]:
+    def list_queries(self) -> List[Query]:
         """
         Lists all Query records.
 
         Returns:
-            List[ORMQuery]: A list of all Query records.
+            List[Query]: A list of all Query records.
         """
         session: Session = self.get_session()
         try:
-            queries = session.query(ORMQuery).all()
+            queries = session.query(Query).all()
             logger.info("Listed %d queries", len(queries))
             return queries
         except Exception as e:
@@ -359,7 +356,7 @@ class DatabaseService:
         """
         session: Session = self.get_session()
         try:
-            query = session.query(ORMQuery).filter(ORMQuery.id == query_id).first()
+            query = session.query(Query).filter(Query.id == query_id).first()
             if query is None:
                 logger.error("Query with ID %s not found for deletion", query_id)
                 raise ValueError("Query not found")

@@ -12,7 +12,7 @@ from docai.storage.schemas import (
     DeleteDocumentResponse,
     ErrorResponse,
 )
-from docai.utils.logging_utils import setup_logging
+from docai.shared.utils.logging_utils import setup_logging
 
 
 setup_logging(LOG_FILE)

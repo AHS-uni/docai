@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 # Import domain models
-from docai.models.document import Document as DomainDocument, MinimalDocument as DomainMinimalDocument, Page as DomainPage
-from docai.models.query import Query as DomainQuery, MinimalQuery as DomainMinimalQuery
+from docai.shared.models.document import Document as DomainDocument, MinimalDocument as DomainMinimalDocument, Page as DomainPage
+from docai.shared.models.query import Query as DomainQuery, MinimalQuery as DomainMinimalQuery
 
 # Import DTO models (assumed in docai.database.schemas)
 from docai.database.schemas import (

@@ -1,0 +1,69 @@
+@startuml
+title Document Ingestion System Sequence Diagram (Detailed Design)
+header Document Upload and Processing
+
+autonumber
+
+actor User
+
+participant "MasterService" as MS
+participant "IngestionService.API" as API
+participant "DocumentManager" as DM
+participant "StorageClient" as SC
+participant "DocumentFactory" as DF
+participant "DatabaseClient" as DBC
+participant "ProcessingQueue" as PQ
+participant "Worker" as BW
+participant "Convert" as CVT
+
+'--- Upload Phase ---
+MS -> API: Send Raw Document Data (via Message Queue)
+activate API
+API -> DM: Handle New Document
+activate DM
+DM -> SC: Upload Raw File to Storage
+activate SC
+SC --> DM: File Upload Acknowledgment
+deactivate SC
+DM -> DF: Create Document Object (state: "created")
+activate DF
+DF --> DM: Document Object
+deactivate DF
+DM -> DBC: Save Document Metadata (state: "created")
+activate DBC
+DBC --> DM: Database Save Acknowledgment
+deactivate DBC
+DM --> API: Return Minimal Document Object (state: "created")
+API --> MS: Acknowledge Document Created
+deactivate DM
+deactivate API
+
+'--- Processing Phase (Asynchronous) ---
+note over DM, PQ: Push Document ID to Processing Queue
+DM -> PQ: Enqueue Document ID
+activate PQ
+PQ --> DM: Queue Acknowledgment
+deactivate PQ
+
+PQ -> BW: Trigger Background Processing
+activate BW
+BW -> DBC: Fetch Document Metadata
+activate DBC
+DBC --> BW: Return Document Metadata
+deactivate DBC
+BW -> CVT: Convert Document to Page Images
+activate CVT
+CVT --> BW: Return Page Images
+deactivate CVT
+BW -> SC: Upload Page Images to Storage
+activate SC
+SC --> BW: Page Images Upload Acknowledgment
+deactivate SC
+BW -> DBC: Update Document Metadata (state: "processed")
+activate DBC
+DBC --> BW: Update Acknowledgment
+deactivate DBC
+BW --> MS: Notify Document Processing Complete
+deactivate BW
+
+@enduml

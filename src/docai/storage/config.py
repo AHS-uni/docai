@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict
-from docai.utils.config_utils import load_environment, load_config
+from docai.shared.utils.config_utils import load_environment, load_config
 
 
 def get_storage_config() -> Dict[str, Any]:

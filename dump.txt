@@ -1,0 +1,1253 @@
+=== START OF src/docai/database/config.py ===
+from typing import Any, Dict
+from docai.utils.config_utils import load_environment, load_config
+
+
+def get_database_config() -> Dict[str, Any]:
+    """
+    Retrieves the database service configuration from the main YAML config.
+
+    Returns:
+        Dict[str, Any]: Dictionary containing database configuration settings.
+
+    Raises:
+        RuntimeError: If the 'database' section is not found in the config file.
+    """
+    config = load_config()
+    database_config = config.get("database")
+    if not database_config:
+        raise RuntimeError("The database configuration is missing in the config file.")
+    return database_config
+
+
+load_environment()
+_database_config = get_database_config()
+
+DB_URL = _database_config["url"]
+POOL_SIZE = _database_config.get("pool_size", 10)
+MAX_OVERFLOW = _database_config.get("max_overflow", 5)
+LOG_FILE = _database_config.get("log_file", "logs/database_service.log")
+=== END OF src/docai/database/config.py ===
+=== START OF src/docai/database/schemas.py ===
+from datetime import datetime
+from typing import Optional, List, Any
+from pydantic import BaseModel, Field
+from docai.models.document import DocumentStatus
+from docai.models.query import QueryStatus
+
+
+# --- Pure DTO Models --- #
+
+
+class Document(BaseModel):
+    """
+    Full DTO representation of a document.
+
+    Attributes:
+        id (str): Unique identifier for the document.
+        file_name (str): The name of the document file.
+        status (DocumentStatus): Current status of the document.
+        metadata (dict): Additional metadata for the document.
+        created_at (datetime): Timestamp when the document was created.
+        processed_at (Optional[datetime]): Timestamp when the document was processed.
+        indexed_at (Optional[datetime]): Timestamp when the document was indexed.
+        pages (List[Page]): List of associated pages in the document.
+    """
+
+    id: str = Field(
+        ...,
+        description="Unique identifier for the document",
+        examples=["doc_abcdef123456"],
+    )
+    file_name: str = Field(
+        ..., description="Name of the document file", examples=["report.pdf"]
+    )
+    status: DocumentStatus = Field(
+        ..., description="Current status of the document", examples=["processed"]
+    )
+    metadata: dict = Field(
+        default_factory=dict,
+        description="Additional document metadata",
+        examples=[{"author": "John Doe", "category": "finance"}],
+    )
+    created_at: datetime = Field(
+        ...,
+        description="Creation timestamp of the document",
+        examples=["2025-04-10T12:00:00Z"],
+    )
+    processed_at: Optional[datetime] = Field(
+        None,
+        description="Processing timestamp of the document",
+        examples=["2025-04-11T09:30:00Z"],
+    )
+    indexed_at: Optional[datetime] = Field(
+        None,
+        description="Indexing timestamp of the document",
+        examples=["2025-04-11T10:00:00Z"],
+    )
+    pages: List["Page"] = Field(
+        default_factory=list, description="List of associated pages"
+    )
+
+
+class MinimalDocument(BaseModel):
+    """
+    Minimal DTO representation of a document for summary endpoints.
+
+    Attributes:
+        id (str): Unique identifier for the document.
+        status (DocumentStatus): Current status of the document.
+        updated_at (Optional[datetime]): Timestamp when the document was last updated.
+    """
+
+    id: str = Field(
+        ...,
+        description="Unique identifier for the document",
+        examples=["doc_abcdef123456"],
+    )
+    status: DocumentStatus = Field(
+        ..., description="Current status of the document", examples=["processed"]
+    )
+    updated_at: datetime = Field(
+        ...,
+        description="Timestamp of the last update to the document",
+        examples=["2025-04-12T15:45:00Z"],
+    )
+
+
+class Page(BaseModel):
+    """
+    DTO representation of a page.
+
+    Attributes:
+        id (str): Unique identifier for the page.
+        page_number (int): The page number within the document.
+        image_path (str): The file path to the page image.
+    """
+
+    id: str = Field(
+        ..., description="Unique identifier for the page", examples=["page_001"]
+    )
+    page_number: int = Field(
+        ..., description="Page number in the document", examples=[1]
+    )
+    image_path: str = Field(
+        ...,
+        description="Filesystem path to the page image",
+        examples=["/images/page1.jpg"],
+    )
+
+
+class Query(BaseModel):
+    """
+    Full DTO representation of a query.
+
+    Attributes:
+        id (str): Unique identifier for the query.
+        text (str): The raw query text.
+        target_document_ids (List[str]): List of document IDs related to the query.
+        metadata (dict): Additional metadata for the query.
+        answer (Optional[str]): Generated answer for the query.
+        created_at (datetime): Timestamp when the query was created.
+        processed_at (Optional[datetime]): Timestamp when the query was processed.
+        indexed_at (Optional[datetime]): Timestamp when the query was indexed.
+        context_retrieved_at (Optional[datetime]): Timestamp when context was retrieved.
+        answered_at (Optional[datetime]): Timestamp when the query was answered.
+        status (QueryStatus): Current status of the query.
+    """
+
+    id: str = Field(
+        ...,
+        description="Unique identifier for the query",
+        examples=["query_1234567890"],
+    )
+    text: str = Field(
+        ..., description="The raw query text", examples=["Find document about AI"]
+    )
+    target_document_ids: List[str] = Field(
+        default_factory=list,
+        description="List of document IDs associated with the query",
+        examples=[["doc_abcdef123456"]],
+    )
+    metadata: dict = Field(
+        default_factory=dict,
+        description="Additional query metadata",
+        examples=[{"priority": "high"}],
+    )
+    answer: Optional[str] = Field(
+        None,
+        description="Generated answer for the query",
+        examples=["The document is available."],
+    )
+    created_at: datetime = Field(
+        ...,
+        description="Creation timestamp of the query",
+        examples=["2025-04-10T12:00:00Z"],
+    )
+    processed_at: Optional[datetime] = Field(
+        None,
+        description="Processing timestamp of the query",
+        examples=["2025-04-10T12:30:00Z"],
+    )
+    indexed_at: Optional[datetime] = Field(
+        None,
+        description="Indexing timestamp of the query",
+        examples=["2025-04-10T12:45:00Z"],
+    )
+    context_retrieved_at: Optional[datetime] = Field(
+        None,
+        description="Timestamp when query context was retrieved",
+        examples=["2025-04-10T12:50:00Z"],
+    )
+    answered_at: Optional[datetime] = Field(
+        None,
+        description="Timestamp when the query was answered",
+        examples=["2025-04-10T13:00:00Z"],
+    )
+    status: QueryStatus = Field(
+        ..., description="Current status of the query", examples=["answered"]
+    )
+
+
+class MinimalQuery(BaseModel):
+    """
+    Minimal DTO representation of a query for summary endpoints.
+
+    Attributes:
+        id (str): Unique identifier for the query.
+        status (QueryStatus): Current status of the query.
+        updated_at (Optional[datetime]): Timestamp when the query was last updated.
+    """
+
+    id: str = Field(
+        ...,
+        description="Unique identifier for the query",
+        examples=["query_1234567890"],
+    )
+    status: QueryStatus = Field(
+        ..., description="Current status of the query", examples=["answered"]
+    )
+    updated_at: datetime = Field(
+        ...,
+        description="Timestamp of the last update to the query",
+        examples=["2025-04-12T16:00:00Z"],
+    )
+
+
+class Error(BaseModel):
+    """
+    DTO representation for error information.
+
+    Attributes:
+        code (int): Numeric error code.
+        message (str): A brief error message.
+        detail (str): Detailed error description.
+    """
+
+    code: int = Field(..., description="Numeric error code", examples=[404])
+    message: str = Field(
+        ..., description="A brief error message", examples=["Not Found"]
+    )
+    detail: str = Field(
+        ...,
+        description="Detailed error description",
+        examples=["The requested document was not found in the database."],
+    )
+
+
+# --- Response Models --- #
+
+
+class DocumentResponse(BaseModel):
+    """
+    Response model for document-related endpoints.
+
+    Attributes:
+        data (List[Document]): Array of full Document DTO objects.
+        meta (dict): Metadata for the response, e.g., timestamp and version information.
+    """
+
+    data: List[Document] = Field(
+        ...,
+        description="List of full document records",
+        examples=[
+            [
+                {
+                    "id": "doc_abcdef123456",
+                    "file_name": "report.pdf",
+                    "status": "processed",
+                    "metadata": {"author": "John Doe"},
+                    "created_at": "2025-04-10T12:00:00Z",
+                    "processed_at": "2025-04-11T09:30:00Z",
+                    "indexed_at": "2025-04-11T10:00:00Z",
+                    "pages": [],
+                }
+            ]
+        ],
+    )
+    meta: dict = Field(
+        ...,
+        description="Response metadata including timestamp, version, etc.",
+        examples=[{"timestamp": "2025-04-12T17:00:00Z", "version": "1.0.0"}],
+    )
+
+
+class PageResponse(BaseModel):
+    """
+    Response model for page-related endpoints.
+
+    Attributes:
+        data (List[Page]): Array of Page DTO objects.
+        meta (dict): Metadata for the response including timestamp and version.
+    """
+
+    data: List[Page] = Field(
+        ...,
+        description="List of page records",
+        examples=[
+            [{"id": "page_001", "page_number": 1, "image_path": "/images/page1.jpg"}]
+        ],
+    )
+    meta: dict = Field(
+        ...,
+        description="Response metadata",
+        examples=[{"timestamp": "2025-04-12T17:00:00Z", "version": "1.0.0"}],
+    )
+
+
+class QueryResponse(BaseModel):
+    """
+    Response model for query-related endpoints.
+
+    Attributes:
+        data (List[Query]): Array of full Query DTO objects.
+        meta (dict): Metadata for the response including timestamp and version information.
+    """
+
+    data: List[Query] = Field(
+        ...,
+        description="List of query records",
+        examples=[
+            [
+                {
+                    "id": "query_1234567890",
+                    "text": "Find document about AI",
+                    "target_document_ids": ["doc_abcdef123456"],
+                    "metadata": {"priority": "high"},
+                    "answer": "The document is available.",
+                    "created_at": "2025-04-10T12:00:00Z",
+                    "processed_at": "2025-04-10T12:30:00Z",
+                    "indexed_at": "2025-04-10T12:45:00Z",
+                    "context_retrieved_at": "2025-04-10T12:50:00Z",
+                    "answered_at": "2025-04-10T13:00:00Z",
+                    "status": "answered",
+                }
+            ]
+        ],
+    )
+    meta: dict = Field(
+        ...,
+        description="Response metadata including timestamp, version, etc.",
+        examples=[{"timestamp": "2025-04-12T17:00:00Z", "version": "1.0.0"}],
+    )
+
+
+class ErrorResponse(BaseModel):
+    """
+    Response model for error responses.
+
+    Attributes:
+        errors (List[Error]): Array of error DTO objects.
+        meta (dict): Metadata for the response including timestamp, version, etc.
+    """
+
+    errors: List[Error] = Field(
+        ...,
+        description="Array of error details",
+        examples=[
+            [
+                {
+                    "code": 404,
+                    "message": "Not Found",
+                    "detail": "The requested document was not found in the database.",
+                }
+            ]
+        ],
+    )
+    meta: dict = Field(
+        ...,
+        description="Response metadata",
+        examples=[{"timestamp": "2025-04-12T17:00:00Z", "version": "1.0.0"}],
+    )
+=== END OF src/docai/database/schemas.py ===
+=== START OF src/docai/database/session.py ===
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from docai.database.models import Base
+from docai.database.config import DB_URL, POOL_SIZE, MAX_OVERFLOW, LOG_FILE
+
+engine = create_engine(
+    DB_URL,
+    echo=True,  # log SQL queries for debugging purposes. Set to False later.
+    pool_size=POOL_SIZE,
+    max_overflow=MAX_OVERFLOW,
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def init_db() -> None:
+    """
+    Initialize the database schema by creating all tables defined in the ORM models.
+
+    Raises:
+        Exception: If an error occurs during table creation.
+    """
+    from docai.database.models import (
+        Base,
+    )
+
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        raise Exception(f"Error initializing the database: {e}") from e
+=== END OF src/docai/database/session.py ===
+=== START OF src/docai/database/tests/__init__.py ===
+=== END OF src/docai/database/tests/__init__.py ===
+=== START OF src/docai/database/utils.py ===
+from docai.database.models import Document as ORMDocument
+from docai.database.models import Query as ORMQuery
+from docai.models.document import Document as DomainDocument
+from docai.models.query import Query as DomainQuery
+from docai.database.schemas import DocumentResponse, QueryResponse
+
+
+# --- Document Conversion --- #
+
+
+# def orm_to_domain_document(orm_doc: ORMDocument) -> DomainDocument:
+#     """
+#     Converts an ORM Document instance to a domain Document instance.
+
+#     Only maps basic fields (id, file_name, timestamps, status, and metadata).
+#     Page data is intentionally omitted because the core domain logic does not require it.
+
+#     Args:
+#         orm_doc (ORMDocument): An ORM model instance of Document.
+
+#     Returns:
+#         DomainDocument: A new domain model instance populated from the ORM model.
+#     """
+#     domain_doc = DomainDocument(
+#         doc_id=orm_doc.id,  # type: ignore
+#         file_name=orm_doc.file_name,  # type: ignore
+#     )
+#     # Copy timestamps
+#     domain_doc.created_at = orm_doc.created_at  # type: ignore
+#     domain_doc.processed_at = orm_doc.processed_at  # type: ignore
+#     domain_doc.indexed_at = orm_doc.indexed_at  # type: ignore
+#     domain_doc._status = orm_doc.status  # type: ignore
+#     return domain_doc
+
+
+# def domain_to_orm_document(domain_doc: DomainDocument, orm_doc: ORMDocument) -> None:
+#     """
+#     Updates an existing ORM Document instance using the corresponding domain Document.
+
+#     Maps the updated fields like status, processed_at, indexed_at, and metadata.
+
+#     Args:
+#         domain_doc (DomainDocument): The domain model instance with business logic applied.
+#         orm_doc (ORMDocument): The ORM model instance to update.
+#     """
+#     orm_doc.status = domain_doc.status  # type: ignore
+#     orm_doc.processed_at = domain_doc.processed_at  # type: ignore
+#     orm_doc.indexed_at = domain_doc.indexed_at  # type: ignore
+#     orm_doc.extra = domain_doc.metadata  # type: ignore
+
+
+def orm_to_response_document(orm_doc: ORMDocument) -> DocumentResponse:
+    """
+    Converts an ORM Document instance into a DocumentResponse.
+
+    The updated_at field is determined based on whether the document has been indexed or processed,
+    and falls back to the creation time if not.
+
+    Args:
+        orm_doc (Document): The ORM Document instance.
+
+    Returns:
+        DocumentResponse: The API response object.
+    """
+    updated_at = orm_doc.indexed_at or orm_doc.processed_at or orm_doc.created_at
+    return DocumentResponse(
+        id=orm_doc.id,  # type: ignore
+        status=orm_doc.status,  # type: ignore
+        updated_at=updated_at,  # type: ignore
+    )
+
+
+# --- Query Conversion ---#
+
+
+# def orm_to_domain_query(orm_query: ORMQuery) -> DomainQuery:
+#     """
+#     Converts an ORM Query instance to a domain Query instance.
+
+#     Maps the essential fields including target document IDs (if stored in extra or as JSON).
+
+#     Args:
+#         orm_query (ORMQuery): The ORM model instance of Query.
+
+#     Returns:
+#         DomainQuery: A new domain model instance populated from the ORM model.
+#     """
+#     domain_query = DomainQuery(
+#         query_id=orm_query.id,  # type: ignore
+#         text=orm_query.text,  # type: ignore
+#     )
+#     domain_query.created_at = orm_query.created_at  # type: ignore
+#     domain_query.processed_at = orm_query.processed_at  # type: ignore
+#     domain_query.indexed_at = orm_query.indexed_at  # type: ignore
+#     domain_query.context_retrieved_at = orm_query.context_retrieved_at  # type: ignore
+#     domain_query.answered_at = orm_query.answered_at  # type: ignore
+#     domain_query._status = orm_query.status  # type: ignore
+
+#     return domain_query
+
+
+# def domain_to_orm_query(domain_query: DomainQuery, orm_query: ORMQuery) -> None:
+#     """
+#     Updates an existing ORM Query instance using values from the domain Query instance.
+
+#     This includes status, timestamps, metadata, and answer.
+
+#     Args:
+#         domain_query (DomainQuery): The domain model with business logic applied.
+#         orm_query (ORMQuery): The ORM model instance to update.
+#     """
+#     orm_query.created_at = domain_query.created_at  # type: ignore
+#     orm_query.processed_at = domain_query.processed_at  # type: ignore
+#     orm_query.indexed_at = domain_query.indexed_at  # type: ignore
+#     orm_query.context_retrieved_at = domain_query.context_retrieved_at  # type: ignore
+#     orm_query.answered_at = domain_query.answered_at  # type: ignore
+#     orm_query.status = domain_query.status  # type: ignore
+
+
+def orm_to_response_query(orm_query: ORMQuery) -> QueryResponse:
+    """
+    Converts an ORM Query instance into a QueryResponse.
+
+    The updated_at field is determined based on the latest timestamp (answered if available,
+    then context_retrieved, indexed, processed, or created).
+
+    Args:
+        orm_query (ORMQuery): The ORM Query instance.
+
+    Returns:
+        QueryResponse: The API response object.
+    """
+    # Determine updated_at by choosing the most recent timestamp.
+    updated_at = (
+        orm_query.answered_at
+        or orm_query.context_retrieved_at
+        or orm_query.indexed_at
+        or orm_query.processed_at
+        or orm_query.created_at
+    )
+    return QueryResponse(
+        id=orm_query.id,  # type: ignore
+        status=orm_query.status,  # type: ignore
+        updated_at=updated_at,  # type: ignore
+    )
+=== END OF src/docai/database/utils.py ===
+=== START OF src/docai/database/models.py ===
+from sqlalchemy.sql import func
+from sqlalchemy import Column, String, Integer, DateTime, Enum, JSON, ForeignKey, Table
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+
+from docai.models.document import DocumentStatus
+from docai.models.query import QueryStatus
+
+Base = declarative_base()
+
+
+# Association table for many-to-many relationship between query and document
+query_document_association = Table(
+    "query_documents",
+    Base.metadata,
+    Column("query_id", String, ForeignKey("queries.id"), primary_key=True),
+    Column("document_id", String, ForeignKey("documents.id"), primary_key=True),
+)
+
+
+class Document(Base):
+    """
+    ORM model representing a Document record.
+
+    Attributes:
+        id (str): Unique identifier for the document.
+        file_name (str): Original PDF file name.
+        created_at (datetime): Timestamp when the document was created.
+        processed_at (Optional[datetime]): Timestamp when document processing completed.
+        indexed_at (Optional[datetime]): Timestamp when document indexing was finished.
+        status (DocumentStatus): Current status of the document.
+        extra (dict): Additional metadata (e.g., page count, extraction info).
+        pages (List[PageImage]): Related page images for this document.
+    """
+
+    __tablename__ = "documents"
+
+    id = Column(String, primary_key=True, index=True)
+    file_name = Column(String, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    processed_at = Column(DateTime, nullable=True)
+    indexed_at = Column(DateTime, nullable=True)
+    status = Column(
+        Enum(DocumentStatus), default=DocumentStatus.CREATED, nullable=False
+    )
+    extra = Column(JSON, default=dict)
+
+    # One-to-many relationship: one document may have multiple pages.
+    pages = relationship(
+        "Page", back_populates="document", cascade="all, delete, delete-orphan"
+    )
+
+    # Many-to-many: a document can belong to multiple queries.
+    queries = relationship(
+        "Query", secondary=query_document_association, back_populates="documents"
+    )
+
+
+class Page(Base):
+    """
+    ORM model representing a single page image of a document.
+
+    Attributes:
+        id (str): Unique identifier for the page image.
+        document_id (str): Foreign key to the parent document.
+        page_number (int): Page index in the document.
+        image_path (str): Filesystem path to the JPG image file.
+    """
+
+    __tablename__ = "pages"
+
+    id = Column(String, primary_key=True, index=True)
+    document_id = Column(String, ForeignKey("documents.id"), nullable=False)
+    page_number = Column(Integer, nullable=False)
+    image_path = Column(String, nullable=False)
+
+    # Relationship back to the parent document.
+    document = relationship("Document", back_populates="pages")
+
+
+class Query(Base):
+    """
+    ORM model representing a user query in DocAI.
+
+    Attributes:
+        id (str): Unique identifier for the query.
+        text (str): The raw query text.
+        created_at (datetime): Timestamp when the query was created.
+        processed_at (Optional[datetime]): Timestamp when processing was completed.
+        indexed_at (Optional[datetime]): Timestamp when indexing was completed.
+        context_retrieved_at (Optional[datetime]): Timestamp when context was retrieved.
+        answered_at (Optional[datetime]): Timestamp when the answer was generated.
+        status (QueryStatus): Current status of the query.
+        extra (dict): Additional metadata for the query.
+        answer (Optional[str]): The generated answer text.
+        documents (List[Document]): Associated documents for this query (many-to-many).
+    """
+
+    __tablename__ = "queries"
+
+    id = Column(String, primary_key=True, index=True)
+    text = Column(String, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    processed_at = Column(DateTime, nullable=True)
+    indexed_at = Column(DateTime, nullable=True)
+    context_retrieved_at = Column(DateTime, nullable=True)
+    answered_at = Column(DateTime, nullable=True)
+    status = Column(Enum(QueryStatus), default=QueryStatus.CREATED, nullable=False)
+    extra = Column(JSON, default=dict)
+    answer = Column(String, nullable=True)
+
+    # Many-to-many relationship with Document.
+    documents = relationship(
+        "Document", secondary=query_document_association, back_populates="queries"
+    )
+=== END OF src/docai/database/models.py ===
+=== START OF src/docai/database/__init__.py ===
+=== END OF src/docai/database/__init__.py ===
+=== START OF src/docai/database/database.py ===
+import logging
+from typing import List, Optional, Any
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+from docai.database.session import SessionLocal
+from docai.database.models import (
+    Document as ORMDocument,
+    Query as ORMQuery,
+    Page as ORMPage,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class DatabaseService:
+    """
+    Encapsulates all database operations for the DocAI application.
+
+    This service class provides methods for creating, retrieving, updating, and listing
+    Document, Page and Query records. Each method manages its own database session and
+    handles transactions and error reporting.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initializes the DatabaseService with a session factory.
+        """
+        self.Session = SessionLocal
+
+    def get_session(self) -> Session:
+        """
+        Creates and returns a new SQLAlchemy session.
+
+        Returns:
+            Session: A new database session instance.
+        """
+        return self.Session()
+
+    # --- Document CRUD Operations --- #
+
+    def create_document(self, document: ORMDocument) -> ORMDocument:
+        """
+        Persists a new Document record to the database.
+
+        Args:
+            document (ORMDocument): The ORM Document instance to save.
+
+        Returns:
+            ORMDocument: The persisted document with any auto-generated fields.
+        """
+        session: Session = self.get_session()
+        try:
+            session.add(document)
+            session.commit()
+            session.refresh(document)
+            logger.info("Created document with ID: %s", document.id)
+            return document
+        except Exception as e:
+            session.rollback()
+            logger.error("Error creating document: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def get_document(self, doc_id: str) -> Optional[ORMDocument]:
+        """
+        Retrieves a Document record by its ID.
+
+        Args:
+            doc_id (str): The unique identifier for the document.
+
+        Returns:
+            Optional[ORMDocument]: The document if found, otherwise None.
+        """
+        session: Session = self.get_session()
+        try:
+            document = (
+                session.query(ORMDocument).filter(ORMDocument.id == doc_id).first()
+            )
+            if document:
+                logger.info("Retrieved document with ID: %s", doc_id)
+            else:
+                logger.warning("Document with ID %s not found", doc_id)
+            return document
+        except Exception as e:
+            logger.error("Error retrieving document %s: %s", doc_id, e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def get_documents_by_ids(self, document_ids: List[str]) -> List[ORMDocument]:
+        """
+        Retrieves Document records that match the provided list of document IDs.
+
+        Args:
+            document_ids (List[str]): The list of document IDs to retrieve.
+
+        Returns:
+            List[ORMDocument]: A list of matching ORM Document instances.
+
+        Raises:
+            ValueError: If one or more document IDs cannot be found.
+        """
+        session: Session = self.get_session()
+        try:
+            documents = (
+                session.query(ORMDocument)
+                .filter(ORMDocument.id.in_(document_ids))
+                .all()
+            )
+
+            # Validate that the expected documents were found
+            found_ids = {doc.id for doc in documents}
+            missing_ids = set(document_ids) - found_ids  # type: ignore
+            if missing_ids:
+                error_message = (
+                    f"Documents with IDs {missing_ids} not found in the database."
+                )
+                logger.error(error_message)
+                raise ValueError(error_message)
+
+            return documents
+        except Exception as e:
+            logger.error("Error fetching documents by IDs: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def list_documents(self) -> List[ORMDocument]:
+        """
+        Lists all Document records.
+
+        Returns:
+            List[ORMDocument]: A list of all Document records.
+        """
+        session: Session = self.get_session()
+        try:
+            documents = session.query(ORMDocument).all()
+            logger.info("Listed %d documents", len(documents))
+            return documents
+        except Exception as e:
+            logger.error("Error listing documents: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def delete_document(self, doc_id: str) -> None:
+        """
+        Deletes a Document record (and related pages) by its ID.
+
+        Args:
+            doc_id (str): The unique identifier for the document.
+
+        Raises:
+            ValueError: If the document is not found.
+        """
+        session: Session = self.get_session()
+        try:
+            document = (
+                session.query(ORMDocument).filter(ORMDocument.id == doc_id).first()
+            )
+            if document is None:
+                logger.error("Document with ID %s not found for deletion", doc_id)
+                raise ValueError("Document not found")
+            session.delete(document)
+            session.commit()
+            logger.info("Deleted document with ID: %s", doc_id)
+        except Exception as e:
+            session.rollback()
+            logger.error("Error deleting document: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    # --- Page Retrieval Operations --- #
+
+    def get_page(self, page_id: str) -> Optional[ORMPage]:
+        """
+        Retrieves a Page record by its ID.
+
+        Args:
+            page_id (str): The unique identifier for the page image.
+
+        Returns:
+            Optional[ORMPage]: The page image if found, else None.
+        """
+        session: Session = self.get_session()
+        try:
+            page = session.query(ORMPage).filter(ORMPage.id == page_id).first()
+            if page:
+                logger.info("Retrieved page with ID: %s", page_id)
+            else:
+                logger.warning("Page with ID %s not found", page_id)
+            return page
+        except Exception as e:
+            logger.error("Error retrieving page %s: %s", page_id, e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def get_pages_by_ids(self, page_ids: List[str]) -> List[ORMPage]:
+        """
+        Retrieves Page records that match the provided list of page IDs.
+
+        Args:
+            page_ids (List[str]): The list of page IDs to retrieve.
+
+        Returns:
+            List[ORMPage]: A list of matching ORM Page instances.
+
+        Raises:
+            ValueError: If one or more page IDs cannot be found.
+        """
+        session: Session = self.get_session()
+        try:
+            pages = session.query(ORMPage).filter(ORMPage.id.in_(page_ids)).all()
+            found_ids = {page.id for page in pages}
+            missing_ids = set(page_ids) - found_ids  # type: ignore
+            if missing_ids:
+                error_message = (
+                    f"Pages with IDs {missing_ids} not found in the database."
+                )
+                logger.error(error_message)
+                raise ValueError(error_message)
+            return pages
+        except Exception as e:
+            logger.error("Error fetching pages by IDs: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def list_pages(self) -> List[ORMPage]:
+        """
+        Retrieves all Page records from the database.
+
+        Returns:
+            List[ORMPage]: A list of page image records.
+        """
+        session: Session = self.get_session()
+        try:
+            pages = session.query(ORMPage).all()
+            logger.info("Listed %d pages", len(pages))
+            return pages
+        except Exception as e:
+            logger.error("Error listing pages: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    # --- Query CRUD Operations --- #
+
+    def create_query(self, query: ORMQuery) -> ORMQuery:
+        """
+        Persists a new Query record to the database.
+
+        Args:
+            query (ORMQuery): The ORM Query instance to save.
+
+        Returns:
+            ORMQuery: The persisted query with updated fields.
+        """
+        session: Session = self.get_session()
+        try:
+            session.add(query)
+            session.commit()
+            session.refresh(query)
+            logger.info("Created query with ID: %s", query.id)
+            return query
+        except Exception as e:
+            session.rollback()
+            logger.error("Error creating query: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def get_query(self, query_id: str) -> Optional[ORMQuery]:
+        """
+        Retrieves a Query record by its ID.
+
+        Args:
+            query_id (str): The unique identifier for the query.
+
+        Returns:
+            Optional[ORMQuery]: The query record if found, otherwise None.
+        """
+        session: Session = self.get_session()
+        try:
+            query = session.query(ORMQuery).filter(ORMQuery.id == query_id).first()
+            if query:
+                logger.info("Retrieved query with ID: %s", query_id)
+            else:
+                logger.warning("Query with ID %s not found", query_id)
+            return query
+        except Exception as e:
+            logger.error("Error retrieving query %s: %s", query_id, e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def get_queries_by_ids(self, query_ids: List[str]) -> List[ORMQuery]:
+        """
+        Fetches ORM Query records that match the provided list of query IDs.
+
+        Args:
+            query_ids (List[str]): The list of query IDs to retrieve.
+
+        Returns:
+            List[ORMQuery]: A list of matching ORM Query instances.
+
+        Raises:
+            ValueError: If one or more query IDs cannot be found.
+        """
+        session: Session = self.get_session()
+        try:
+            queries = session.query(ORMQuery).filter(ORMQuery.id.in_(query_ids)).all()
+            found_ids = {query.id for query in queries}
+            missing_ids = set(query_ids) - found_ids  # type: ignore
+            if missing_ids:
+                error_message = (
+                    f"Queries with IDs {missing_ids} not found in the database."
+                )
+                logger.error(error_message)
+                raise ValueError(error_message)
+            return queries
+        except Exception as e:
+            logger.error("Error fetching queries by IDs: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def list_queries(self) -> List[ORMQuery]:
+        """
+        Lists all Query records.
+
+        Returns:
+            List[ORMQuery]: A list of all Query records.
+        """
+        session: Session = self.get_session()
+        try:
+            queries = session.query(ORMQuery).all()
+            logger.info("Listed %d queries", len(queries))
+            return queries
+        except Exception as e:
+            logger.error("Error listing queries: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    def delete_query(self, query_id: str) -> None:
+        """
+        Deletes a Query record by its ID.
+
+        Args:
+            query_id (str): The unique identifier for the query.
+
+        Raises:
+            ValueError: If the query is not found.
+        """
+        session: Session = self.get_session()
+        try:
+            query = session.query(ORMQuery).filter(ORMQuery.id == query_id).first()
+            if query is None:
+                logger.error("Query with ID %s not found for deletion", query_id)
+                raise ValueError("Query not found")
+            session.delete(query)
+            session.commit()
+            logger.info("Deleted query with ID: %s", query_id)
+        except Exception as e:
+            session.rollback()
+            logger.error("Error deleting query: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+
+    # --- Raw SQL Operations ---#
+
+    def execute_raw_sql(
+        self, sql_query: str, params: Optional[dict] = None
+    ) -> List[Any]:
+        """
+        Executes a raw SQL query and returns the result.
+
+        This function allows executing arbitrary SQL commands for flexibility (e.g., advanced reporting).
+
+        Args:
+            sql_query (str): The raw SQL query to execute.
+            params (Optional[dict]): Optional dictionary of parameters to bind to the query.
+
+        Returns:
+            List[Any]: A list of rows resulting from the query.
+        """
+        session: Session = self.get_session()
+        try:
+            result = session.execute(text(sql_query), params).fetchall()
+            logger.info("Executed raw SQL query")
+            return result  # type: ignore
+        except Exception as e:
+            logger.error("Error executing raw SQL query: %s", e, exc_info=True)
+            raise
+        finally:
+            session.close()
+=== END OF src/docai/database/database.py ===
+=== START OF src/docai/database/api.py ===
+import logging
+from typing import List, Optional, Any
+
+from fastapi import FastAPI, HTTPException, Query
+
+from docai.database.database import DatabaseService
+from docai.database.schemas import (
+    DocumentResponse,
+    QueryResponse,
+    ErrorResponse,
+    SQLQueryResponse,
+)
+from docai.database.utils import orm_to_response_document, orm_to_response_query
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="Database Service",
+    description="API endpoints to manage documents and queries in the DocAI system.",
+    version="1.0.0",
+)
+
+db_service = DatabaseService()
+
+# --- Document Related Endpoints --- #
+
+
+@app.get(
+    "/documents/{doc_id}",
+    response_model=DocumentResponse,
+    responses={404: {"model": ErrorResponse}},
+)
+def get_document(doc_id: str):
+    """
+    Retrieve a document by its ID.
+
+    Args:
+        doc_id (str): Unique identifier for the document.
+
+    Returns:
+        DocumentResponse: The document response containing its ID, status, and update timestamp.
+
+    Raises:
+        HTTPException: If the document is not found.
+    """
+    try:
+        doc = db_service.get_document(doc_id)
+        if doc is None:
+            raise HTTPException(status_code=404, detail="Document not found")
+        return orm_to_response_document(doc)
+    except Exception as e:
+        logger.error("Error in get_document: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get(
+    "/documents",
+    response_model=List[DocumentResponse],
+    responses={500: {"model": ErrorResponse}},
+)
+def list_documents():
+    """
+    List all documents.
+
+    Returns:
+        List[DocumentResponse]: A list of document responses.
+    """
+    try:
+        docs = db_service.list_documents()
+        return [orm_to_response_document(doc) for doc in docs]
+    except Exception as e:
+        logger.error("Error in list_documents: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.delete(
+    "/documents/{doc_id}",
+    response_model=DocumentResponse,
+    responses={404: {"model": ErrorResponse}},
+)
+def delete_document(doc_id: str):
+    """
+    Delete a document by its ID.
+
+    Args:
+        doc_id (str): Unique identifier for the document.
+
+    Returns:
+        DocumentResponse: The response representing the deleted document record.
+
+    Raises:
+        HTTPException: If the document is not found or deletion fails.
+    """
+    try:
+        # Retrieve the document first (to return details if needed)
+        doc = db_service.get_document(doc_id)
+        if doc is None:
+            raise HTTPException(status_code=404, detail="Document not found")
+        db_service.delete_document(doc_id)
+        return orm_to_response_document(doc)
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception as e:
+        logger.error("Error deleting document: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to delete document")
+
+
+@app.get(
+    "/queries/{query_id}",
+    response_model=QueryResponse,
+    responses={404: {"model": ErrorResponse}},
+)
+def get_query(query_id: str):
+    """
+    Retrieve a query record by its ID.
+
+    Args:
+        query_id (str): Unique identifier for the query.
+
+    Returns:
+        QueryResponse: The query response containing its ID, status, and update timestamp.
+
+    Raises:
+        HTTPException: If the query is not found.
+    """
+    try:
+        query = db_service.get_query(query_id)
+        if query is None:
+            raise HTTPException(status_code=404, detail="Query not found")
+        return orm_to_response_query(query)
+    except Exception as e:
+        logger.error("Error in get_query: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.patch(
+    "/queries/{query_id}/status",
+    response_model=QueryResponse,
+    responses={404: {"model": ErrorResponse}},
+)
+def update_query_status(
+    query_id: str, new_status: QueryStatus = Query(..., description="New query status")
+):
+    """
+    Update the status of a query.
+
+    Args:
+        query_id (str): Unique identifier for the query.
+        new_status (QueryStatus): New query status to be applied.
+
+    Returns:
+        QueryResponse: The updated query response.
+
+    Raises:
+        HTTPException: If the query is not found or if the update fails.
+    """
+    try:
+        updated_query = db_service.update_query_status(query_id, new_status)
+        return orm_to_response_query(updated_query)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        logger.error("Error updating query status: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to update query status")
+=== END OF src/docai/database/api.py ===

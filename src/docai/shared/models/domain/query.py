@@ -182,6 +182,7 @@ class Query:
             "status": self.status.value,
             "extra": self.extra,
             "target_document_ids": self.target_document_ids,
+            "context_page_ids": self.context_page_ids,
             "answer": self.answer,
         }
 

@@ -7,7 +7,7 @@ from docai.ingestion.pdf_to_jpg import convert_pdf_to_images
 from docai.ingestion.id_generator import generate_id
 from docai.ingestion.models import Document, PageImage, DocumentStatus
 from docai.config import load_environment, load_config
-from docai.utils.logging_utils import setup_logging
+from docai.shared.utils.logging_utils import setup_logging
 
 logger = logging.getLogger(__name__)
 

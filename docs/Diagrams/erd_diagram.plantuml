@@ -1,0 +1,52 @@
+@startuml erd
+hide circle
+
+entity "documents" as Document {
+* id: str <<PK>>
+--
+file_name: str
+created_at: datetime
+processed_at?: datetime
+indexed_at?: datetime
+status: DocumentStatus
+extra: JSON
+}
+
+entity "pages" as Page {
+* id: str <<PK>>
+--
+document_id: str <<FK>>
+page_number: int
+image_path: str
+}
+
+entity "queries" as Query {
+* id: str <<PK>>
+--
+text: str
+created_at: datetime
+processed_at?: datetime
+indexed_at?: datetime
+context_retrieved_at?: datetime
+answered_at?: datetime
+status: QueryStatus
+extra: JSON
+answer?: str
+}
+
+entity "query_documents" as QueryDocument {
+* query_id: str <<PK,FK>>
+* document_id: str <<PK,FK>>
+}
+
+entity "query_pages" as QueryPage {
+* query_id: str <<PK,FK>>
+* page_id: str <<PK,FK>>
+}
+
+Document ||--o{ Page           : has pages
+Query    ||--o{ QueryDocument : links
+Document ||--o{ QueryDocument : links
+Query    ||--o{ QueryPage     : context pages
+Page     ||--o{ QueryPage     : context pages
+@enduml

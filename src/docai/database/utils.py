@@ -1,7 +1,7 @@
 from docai.database.models import Document as ORMDocument
 from docai.database.models import Query as ORMQuery
-from docai.models.document import Document as DomainDocument
-from docai.models.query import Query as DomainQuery
+from docai.shared.models.document import Document as DomainDocument
+from docai.shared.models.query import Query as DomainQuery
 from docai.database.schemas import DocumentResponse, QueryResponse
 
 

@@ -1,0 +1,119 @@
+@startuml classDiagram
+skinparam classAttributeIconSize 0
+
+package "Domain Models" {
+class DomainPage {
++id: str
++page_number: int
++image_path: str
++to_dict(): dict
+}
+class DomainDocument {
++id: str
++file_name: str
++created_at: datetime
++processed_at?: datetime
++indexed_at?: datetime
++status: DocumentStatus
++extra: dict
++pages: List\<DomainPage\>
++to_dict(): dict
+}
+class DomainQuery {
++id: str
++text: str
++created_at: datetime
++processed_at?: datetime
++indexed_at?: datetime
++context_retrieved_at?: datetime
++answered_at?: datetime
++status: QueryStatus
++extra: dict
++target_document_ids: List\<str\>
++context_page_ids?: List\<str\>
++answer?: str
++to_dict(): dict
+}
+}
+
+package "DTO Models" {
+class DTOPage {
++id: str
++page_number: int
++image_path: str
+}
+class DTODocument {
++id: str
++file_name: str
++status: DocumentStatus
++metadata: dict
++created_at: datetime
++processed_at?: datetime
++indexed_at?: datetime
++pages: List\<DTOPage\>
+}
+class DTOQuery {
++id: str
++text: str
++target_document_ids: List\<str\>
++context_page_ids: List\<str\>
++metadata: dict
++answer?: str
++created_at: datetime
++processed_at?: datetime
++indexed_at?: datetime
++context_retrieved_at?: datetime
++answered_at?: datetime
++status: QueryStatus
+}
+}
+
+package "ORM Models" {
+class ORMPage {
++id: str
++document_id: str
++page_number: int
++image_path: str
++document
++queries
+}
+class ORMDocument {
++id: str
++file_name: str
++created_at: datetime
++processed_at?: datetime
++indexed_at?: datetime
++status: DocumentStatus
++extra: dict
++pages
++queries
+}
+class ORMQuery {
++id: str
++text: str
++created_at: datetime
++processed_at?: datetime
++indexed_at?: datetime
++context_retrieved_at?: datetime
++answered_at?: datetime
++status: QueryStatus
++extra: dict
++answer?: str
++documents
++pages
+}
+}
+
+DomainDocument    --> "1..*" DomainPage          : has
+DomainQuery       --> "0..*" DomainDocument     : target_document_ids
+DomainQuery       --> "0..*" DomainPage         : context_page_ids
+DTOPage           ..> DomainPage                : corresponds-to
+DTODocument       ..> DomainDocument            : corresponds-to
+DTOQuery          ..> DomainQuery               : corresponds-to
+ORMPage           ..> DomainPage                : maps-to
+ORMDocument       ..> DomainDocument            : maps-to
+ORMQuery          ..> DomainQuery               : maps-to
+ORMPage           -- ORMDocument               : fk->document_id
+ORMQuery          -- ORMDocument               : m2m->query_documents
+ORMQuery          -- ORMPage                   : m2m->query_pages
+@enduml
