@@ -1,30 +1,56 @@
+"""
+FastAPI service for handling PDF and image storage operations.
+
+This module defines endpoints for saving, retrieving, and deleting PDF files and
+page images associated with documents. It uses an asynchronous file storage service.
+"""
+
 import uvicorn
 import logging
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Query
 from fastapi.responses import FileResponse
 
-from docai.storage.storage import StorageService
 from docai.storage.config import BASE_PATH, HOST, PORT, LOG_FILE
+from docai.shared.models.dto.meta import Meta
 from docai.storage.schemas import (
     SavePDFResponse,
+    SavePDFData,
     SaveImageResponse,
+    SaveImageData,
     DeleteDocumentResponse,
+    DeleteDocumentData,
     ErrorResponse,
 )
+from docai.storage.storage import StorageService
+from docai.storage.exceptions import (
+    SavePDFError,
+    SaveImageError,
+    PDFNotFoundError,
+    ImageNotFoundError,
+    DeleteDocumentError,
+)
 from docai.shared.utils.logging_utils import setup_logging
+from docai.storage.config import VERSION
 
 
+# Initialize logging
 setup_logging(LOG_FILE)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Storage Service",
-    description="Service to handle file storage operations.",
-    version="1.0.0",
+    description="Async file storage service for PDFs and images.",
+    version=VERSION,
 )
 
 s_service = StorageService(BASE_PATH)
+
+
+def _response_meta() -> Meta:
+    """Generate a fresh Meta object."""
+    return Meta(timestamp=datetime.now(timezone.utc), version="1.0.0")
 
 
 @app.post(
@@ -32,61 +58,58 @@ s_service = StorageService(BASE_PATH)
     response_model=SavePDFResponse,
     responses={500: {"model": ErrorResponse}},
 )
-async def save_pdf(doc_id: str, file: UploadFile = File(...)):
+async def save_pdf(doc_id: str, file: UploadFile = File(...)) -> SavePDFResponse:
     """
-    Save a PDF file to the storage service.
+    Save a PDF file asynchronously.
 
     Args:
-        doc_id (str): Unique identifier for the document.
-        file (UploadFile): The uploaded PDF file.
+        doc_id (str): Unique document identifier.
+        file (UploadFile): Uploaded PDF file.
 
     Returns:
-        SavePDFResponse: An object containing the document ID and the path to the saved PDF.
-
-    Raises:
-        HTTPException: If saving the file fails.
+        SavePDFResponse: Response containing saved‐PDF details and meta.
     """
+    content = await file.read()
     try:
-        content = await file.read()
-        file_path = s_service.save_pdf(doc_id, content)
-        return SavePDFResponse(doc_id=doc_id, pdf_path=str(file_path))
-    except Exception as e:
-        logger.error("Error saving PDF for doc_id %s: %s", doc_id, e, exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to save PDF file.")
+        path = await s_service.save_pdf(doc_id, content)
+        data = SavePDFData(doc_id=doc_id, pdf_path=str(path))
+        return SavePDFResponse(data=data, meta=_response_meta())
+    except SavePDFError as e:
+        logger.error("Error saving PDF for %s: %s", doc_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get(
-    "/pdf/get", responses={404: {"model": ErrorResponse}, 500: {"model": ErrorResponse}}
+    "/pdf/get",
+    responses={
+        200: {"content": {"application/pdf": {}}, "description": "The PDF file"},
+        404: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
 )
-def get_pdf(doc_id: str):
+async def get_pdf(doc_id: str) -> FileResponse:
     """
-    Retrieve the PDF file for a specific document.
+    Retrieve a stored PDF file asynchronously.
 
     Args:
-        doc_id (str): Unique identifier for the document.
+        doc_id (str): Unique document identifier.
 
     Returns:
-        FileResponse: A file response containing the PDF file.
-
-    Raises:
-        HTTPException: If the file is not found or retrieval fails.
+        FileResponse: The PDF file stream.
     """
     try:
-        file_path = s_service.get_pdf_path(doc_id)
+        path = await s_service.get_pdf_path(doc_id)
         return FileResponse(
-            path=str(file_path), media_type="application/pdf", filename=f"{doc_id}.pdf"
+            path=str(path), media_type="application/pdf", filename=f"{doc_id}.pdf"
         )
-    except FileNotFoundError as e:
-        logger.error("PDF not found for doc_id %s: %s", doc_id, e, exc_info=True)
+    except PDFNotFoundError as e:
+        logger.warning("PDF not found for %s: %s", doc_id, e)
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(
-            "Unexpected error retrieving PDF for doc_id %s: %s",
-            doc_id,
-            e,
-            exc_info=True,
+            "Unexpected error retrieving PDF for %s: %s", doc_id, e, exc_info=True
         )
-        raise HTTPException(status_code=500, detail="Failed to retrieve PDF file.")
+        raise HTTPException(status_code=500, detail="Failed to retrieve PDF.")
 
 
 @app.post(
@@ -95,82 +118,77 @@ def get_pdf(doc_id: str):
     responses={500: {"model": ErrorResponse}},
 )
 async def save_image(
-    doc_id: str, page_number: int = Query(..., ge=0), file: UploadFile = File(...)
-):
+    doc_id: str,
+    page_number: int = Query(..., ge=0),
+    file: UploadFile = File(...),
+) -> SaveImageResponse:
     """
-    Save an image file for a specific page of a document.
+    Save a page image asynchronously.
 
     Args:
-        doc_id (str): Unique identifier for the document.
-        page_number (int): The page number of the image.
-        file (UploadFile): The uploaded image file.
+        doc_id (str): Unique document identifier.
+        page_number (int): Zero‐based page index.
+        file (UploadFile): Uploaded JPEG file.
 
     Returns:
-        SaveImageResponse: An object containing the document ID, page number, and the path to the saved image.
-
-    Raises:
-        HTTPException: If saving the image fails.
+        SaveImageResponse: Response containing saved‐image details and meta.
     """
+    content = await file.read()
     try:
-        content = await file.read()
-        file_path = s_service.save_image(doc_id, page_number, content)
-        return SaveImageResponse(
-            doc_id=doc_id, page_number=page_number, image_path=str(file_path)
+        path = await s_service.save_image(doc_id, page_number, content)
+        data = SaveImageData(
+            doc_id=doc_id, page_number=page_number, image_path=str(path)
         )
-    except Exception as e:
+        return SaveImageResponse(data=data, meta=_response_meta())
+    except SaveImageError as e:
         logger.error(
-            "Error saving image for doc_id %s, page %d: %s",
+            "Error saving image for %s page %d: %s",
             doc_id,
             page_number,
             e,
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail="Failed to save image file.")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get(
     "/image/get",
-    responses={404: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
+    responses={
+        200: {"content": {"image/jpeg": {}}, "description": "The JPEG image"},
+        404: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
 )
-def get_image(doc_id: str, page_number: int = Query(..., ge=0)):
+async def get_image(doc_id: str, page_number: int = Query(..., ge=0)) -> FileResponse:
     """
-    Retrieve the image file for a specific page of a document.
+    Retrieve a stored page image asynchronously.
 
     Args:
-        doc_id (str): Unique identifier for the document.
-        page_number (int): The page number of the desired image.
+        doc_id (str): Unique document identifier.
+        page_number (int): Zero‐based page index.
 
     Returns:
-        FileResponse: A file response containing the image file.
-
-    Raises:
-        HTTPException: If the image file is not found or retrieval fails.
+        FileResponse: The JPEG image stream.
     """
     try:
-        file_path = s_service.get_image_path(doc_id, page_number)
+        path = await s_service.get_image_path(doc_id, page_number)
         return FileResponse(
-            path=str(file_path),
+            path=str(path),
             media_type="image/jpeg",
             filename=f"{doc_id}_p{page_number}.jpg",
         )
-    except FileNotFoundError as e:
-        logger.error(
-            "Image not found for doc_id %s, page %d: %s",
-            doc_id,
-            page_number,
-            e,
-            exc_info=True,
-        )
+    except ImageNotFoundError as e:
+        logger.warning("Image not found for %s page %d: %s", doc_id, page_number, e)
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(
-            "Unexpected error retrieving image for doc_id %s, page %d: %s",
+            "Unexpected error retrieving image for %s page %d: %s",
             doc_id,
             page_number,
             e,
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail="Failed to retrieve image file.")
+        raise HTTPException(status_code=500, detail="Failed to retrieve image.")
 
 
 @app.delete(
@@ -178,30 +196,26 @@ def get_image(doc_id: str, page_number: int = Query(..., ge=0)):
     response_model=DeleteDocumentResponse,
     responses={500: {"model": ErrorResponse}},
 )
-def delete_document(doc_id: str):
+async def delete_document(doc_id: str) -> DeleteDocumentResponse:
     """
-    Delete a document and all its associated files (PDF and images).
+    Delete a document and all its associated files asynchronously.
 
     Args:
-        doc_id (str): Unique identifier for the document to be deleted.
+        doc_id (str): Document identifier.
 
     Returns:
-        DeleteDocumentResponse: Confirmation of successful deletion.
-
-    Raises:
-        HTTPException: If deletion fails.
+        DeleteDocumentResponse: Response containing deletion confirmation and meta.
     """
     try:
-        s_service.delete_document(doc_id)
-        return DeleteDocumentResponse(
+        await s_service.delete_document(doc_id)
+        data = DeleteDocumentData(
             doc_id=doc_id, detail="Document deleted successfully."
         )
-    except Exception as e:
-        logger.error(
-            "Error deleting document for doc_id %s: %s", doc_id, e, exc_info=True
-        )
-        raise HTTPException(status_code=500, detail="Failed to delete document.")
+        return DeleteDocumentResponse(data=data, meta=_response_meta())
+    except DeleteDocumentError as e:
+        logger.error("Error deleting document %s: %s", doc_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=HOST, port=PORT)
+    uvicorn.run("docai.storage.api:app", host=HOST, port=PORT, reload=True)

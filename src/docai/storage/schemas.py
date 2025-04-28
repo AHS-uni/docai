@@ -1,11 +1,16 @@
+from typing import List
+
 from pydantic import BaseModel, Field
 
-# --- Request Response Models ---
+from docai.shared.models.dto.meta import Meta
+from docai.shared.models.dto.error import ErrorResponse
+
+__all__ = ["ErrorResponse"]
 
 
-class SavePDFResponse(BaseModel):
+class SavePDFData(BaseModel):
     """
-    Response model for saving a PDF file in the storage service.
+    The payload for a successful PDF‐save response.
 
     Attributes:
         doc_id (str): Unique identifier for the document.
@@ -24,9 +29,22 @@ class SavePDFResponse(BaseModel):
     )
 
 
-class SaveImageResponse(BaseModel):
+class SavePDFResponse(BaseModel):
     """
-    Response model for saving an image file (a page) in the storage service.
+    Response model for saving a PDF, with metadata.
+
+    Attributes:
+        data (SavePDFData): The saved‐PDF payload.
+        meta (Meta): Metadata about the response (timestamp, version, etc.).
+    """
+
+    data: SavePDFData = Field(..., description="Saved PDF details")
+    meta: Meta = Field(..., description="Response metadata")
+
+
+class SaveImageData(BaseModel):
+    """
+    The payload for a successful image‐save response.
 
     Attributes:
         doc_id (str): Unique identifier for the document.
@@ -49,9 +67,22 @@ class SaveImageResponse(BaseModel):
     )
 
 
-class DeleteDocumentResponse(BaseModel):
+class SaveImageResponse(BaseModel):
     """
-    Response model for deleting a document and its associated files.
+    Response model for saving an image, with metadata.
+
+    Attributes:
+        data (SaveImageData): The saved‐image payload.
+        meta (Meta): Metadata about the response (timestamp, version, etc.).
+    """
+
+    data: SaveImageData = Field(..., description="Saved image details")
+    meta: Meta = Field(..., description="Response metadata")
+
+
+class DeleteDocumentData(BaseModel):
+    """
+    The payload for a successful document deletion response.
 
     Attributes:
         doc_id (str): Unique identifier for the deleted document.
@@ -70,17 +101,14 @@ class DeleteDocumentResponse(BaseModel):
     )
 
 
-# --- Error Response Models ---
-
-
-class ErrorResponse(BaseModel):
+class DeleteDocumentResponse(BaseModel):
     """
-    Error response model for storage service endpoints.
+    Response model for deleting a document, with metadata.
 
     Attributes:
-        detail (str): A description of the encountered error.
+        data (DeleteDocumentData): The deleted‐document payload.
+        meta (Meta): Metadata about the response (timestamp, version, etc.).
     """
 
-    detail: str = Field(
-        ..., description="Error message", examples=["Document not found"]
-    )
+    data: DeleteDocumentData = Field(..., description="Deleted document details")
+    meta: Meta = Field(..., description="Response metadata")

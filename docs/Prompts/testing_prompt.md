@@ -1,69 +1,87 @@
-You are a highly capable software testing engineer. Your goal is to design a comprehensive and robust testing strategy for modules in a project. Rather than generating the complete test code, focus on outlining the design and skeleton structure for the tests that will later be implemented.
+You are a highly capable software-testing engineer. Your goal is to design a comprehensive, end-to-end testing strategy for an entire Python package (not just a single module). This package is part of a distributed RAG system and makes heavy use of asynchronous calls and a server–client architecture. Rather than writing full test code, focus on outlining the design and skeleton structure for the tests that will later be implemented.
 
-### Design a Comprehensive Testing Strategy
+### Design a Comprehensive Testing Strategy for the Package
 
-1. **Module Isolation**:
-- Describe how to isolate the module's functionality from external side effects.
-- Outline how tests will target the module's functions, methods, and classes exclusively.
+1. **High-Level Test Framework**
+- State which framework(s) you’d use (e.g. `pytest` with `pytest-asyncio` plugins, or `unittest` with `asyncio` support).
+- Describe how you’ll configure the test runner (e.g. `pytest.ini`) to discover tests across multiple subpackages.
 
-2. **Mocking External Dependencies**:
-- If the module interacts with external resources (e.g., databases, file storages, APIs), explain your plan for mocking these dependencies using fixtures, stubs, or similar techniques.
-- For modules requiring external data (e.g., images, documents) or synthetic data, indicate where placeholders should be used, e.g., `# TODO: Replace with actual image path or synthetic data`.
+2. **Module/Flow Isolation**
+- Explain how you’ll split tests into separate files or folders, each targeting:
+- Core async services (e.g. ingestion, retrieval, storage)
+- Client interfaces (e.g. HTTP client stubs, message-queue clients)
+- Server endpoints (e.g. FastAPI/Starlette routes, request handlers)
+- For each section, describe how to isolate side effects (e.g. `pytest` fixtures that spin up in-memory servers or mock message brokers).
 
-3. **Testing Strategies**:
-- Propose various testing techniques (e.g., assertion checks for expected outcomes, boundary tests, negative testing) that will validate both the typical and edge-case behaviors of the module.
-- Clearly articulate ideas for how to test error conditions and unexpected inputs.
+3. **Mocking & Stubbing External Dependencies**
+- For database calls, file I/O, or external APIs, outline use of:
+- `pytest-mock` or `unittest.mock.AsyncMock` for async stubs
+- Fixtures that provide fake data or in-memory stand-ins (e.g. SQLite in memory, a fake S3 server)
+- Show where to place TODO comments for real file paths or synthetic data (e.g. `# TODO: provide sample PDF bytes here`).
 
-4. **Test Organization and Skeleton Structure**:
-- Provide an outline or skeleton for organizing tests. For example, how tests might be grouped into classes or functions based on the module's components.
-- Define the use of setup and teardown methods to prepare the test environment.
-- Identify potential helper functions or utilities that could be employed to streamline testing operations.
+4. **Testing Async Flows & Server–Client Interactions**
+- Describe how to:
+- Use `pytest.mark.asyncio` (or equivalent) to test `async def` functions.
+- Spin up a test instance of the server (e.g. via `TestClient` from FastAPI) to send real HTTP requests.
+- Verify full request→response cycles, including error codes, headers, and payloads.
+- Outline how to simulate concurrent requests, timeouts, and graceful failure modes.
 
-5. **Comprehensiveness and Coverage**:
-   - Explain how you plan to achieve high test coverage, including typical usage scenarios, edge cases, and failure modes.
-   - Discuss any particular testing frameworks (e.g., `unittest` or `pytest`) and timing strategies that will support the testing design.
+5. **Test Organization & Skeleton Structure**
+- Provide a directory sketch, for example:
+     ```
+     tests/
+       conftest.py
+       integration/
+         test_server_endpoints.py
+         test_client_integration.py
+       unit/
+         test_async_services.py
+         test_helpers.py
+         test_schemas.py
+     ```
+     - Show in each file:
+     ```python
+     import pytest
+     from mypackage.module import SomeService
+
+     @pytest.fixture
+     async def service():
+         # TODO: set up fake dependencies
+         return SomeService(...)
+
+     @pytest.mark.asyncio
+     async def test_some_method_success(service):
+         # Arrange
+         # TODO: prepare input
+         # Act
+         result = await service.some_method(...)
+         # Assert
+         assert result == ...
+     ```
+
+6. **Setup & Teardown**
+- Explain use of session-scoped fixtures for heavy resources (e.g. a test database).
+- Show per-test fixtures for clean state (e.g. resetting in-memory queues).
+
+7. **Coverage & Robustness**
+- Describe how to ensure:
+- Coverage of happy paths, edge cases, and failure modes.
+- Test of retry logic, circuit breakers, backoff strategies.
+- Propose using coverage tools (e.g. `pytest-cov`) and test thresholds.
+
+8. **Placeholders & TODOs**
+- In the skeletons, include:
+     ```python
+     # TODO: insert path to sample image file
+     # TODO: generate synthetic document bytes
+     ```
+     - Mark where to add real message-broker URLs or credentials for integration tests.
 
 ---
-MODULE STRUCTURE AND FILE CONTENTS:
+
+#### MODULE STRUCTURE AND FILE CONTENTS
 ```
-<Insert module file structure and content here>
-```
-
-In your response, provide a detailed design and skeleton outline of the test strategy, including:
-- A high-level description of the test framework to be used.
-- Section headings or comments where specific tests should be implemented.
-- Descriptions of the planned tests and any necessary setup/teardown or mock strategies.
-- Placeholders and TODO comments indicating where further concrete details (such as actual data paths or synthetically generated content) need to be filled in later.
-
-Focus on the design and structure so that another developer could later implement full test code based on your outlined approach.
-
-
-### PART 2: Generate Timing Tests for Performance Analysis
-Generate a file called "time_\<module\>.py" to benchmark and time key functions in the module that may serve as performance bottlenecks. Follow these guidelines:
-
-1. **Function Identification**: Identify functions or methods likely to be performance-critical (e.g., database sessions, object creation, data processing routines). Focus on those that significantly contribute to execution time.
-2. **Performance Timing**:
-   - For each identified function, run it multiple times (default to 20 iterations) and calculate the average execution time.
-   - Ensure that timing isolates the function under test, excluding setup or teardown overhead.
-3. **Report Generation**: Present the timing results clearly, for example, by printing the results in a table or structured summary in the console.
-4. **Modular Design**: Organize the timing code for maintainability, potentially by abstracting common timing routines into helper functions.
-
-Remember:
-- Treat these as independent, unit tests dedicated to assessing module performance.
-- Benchmark only the functions most likely to cause performance issues rather than every function.
-
-MODULE STRUCTURE AND FILE CONTENTS:
-```
-<Insert module file structure here>
+<Insert your package’s directory tree and key file excerpts here>
 ```
 
-### Additional Instructions
-- **Handling External Raw and Synthetic Data**:
-  - Where required, include a plan for handling external raw data (e.g., image files, document files) or synthetic data.
-  - Use placeholders in the code (or comments) indicating where actual file paths, URLs, or synthetic data generation should occur, such as `# TODO: Insert path to sample image file` or `# TODO: Generate synthetic document content`.
-  - If possible, include example snippets that generate or simulate such data to test the module’s functionality.
-- Use appropriate libraries for testing (e.g., `unittest` or `pytest`) and for timing (e.g., the built-in `time` or `timeit` modules).
-- For mocking or simulating external dependencies, leverage libraries such as `unittest.mock` or fixtures in `pytest`.
-- Ensure your code is clean, well-commented, adheres to Python best practices, and provides clear instructions on where and how to add external data.
-
-Generate the files "test_\<module\>.py" and "time_\<module\>.py" based on the above information and the provided module structure and contents.
+In your response, deliver a detailed outline—complete with section headings, example skeletons, fixture descriptions, and mock strategies—so that another developer can immediately begin implementing full test code against your package.

@@ -20,4 +20,7 @@ database:
     pool_size: 10
     max_overflow: 5
     log_file: "logs/database_service.log"
+    client_max_connections: 10
+    client_max_keepalive_connections: 5
+    version: "1.0.0"
 ...
