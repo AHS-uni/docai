@@ -1,28 +1,47 @@
 from pathlib import Path
+import importlib
+from pathlib import Path
 
-from docai.storage.config import StorageSettings, BASE_PATH, HOST, PORT, LOG_FILE
-
-
-def test_defaults(monkeypatch):
-    # clear any STORAGE_* environment
-    for k in ("STORAGE_BASE_PATH", "STORAGE_HOST", "STORAGE_PORT", "STORAGE_LOG_FILE"):
-        monkeypatch.delenv(k, raising=False)
-
-    settings = StorageSettings()
-    assert settings.base_path == BASE_PATH
-    assert settings.host == HOST
-    assert settings.port == PORT
-    assert settings.log_file == LOG_FILE
+from docai.storage import config
 
 
-def test_env_overrides(monkeypatch):
+def test_host_default(monkeypatch):
+    monkeypatch.delenv("STORAGE_HOST", raising=False)
+    importlib.reload(config)
+    assert config.HOST == "0.0.0.0"
+
+
+def test_host_override(monkeypatch):
+    monkeypatch.setenv("STORAGE_HOST", "127.231.19.9")
+    importlib.reload(config)
+    assert config.HOST == "127.231.19.9"
+
+
+def test_port_default(monkeypatch):
+    monkeypatch.delenv("STORAGE_PORT", raising=False)
+    importlib.reload(config)
+    assert config.PORT == 8000
+
+
+def test_port_override(monkeypatch):
+    monkeypatch.setenv("STORAGE_PORT", "8080")
+    importlib.reload(config)
+    assert config.PORT == 8080
+
+
+def test_client_limits_positive():
+    assert config.CLIENT_REQUEST_TIMEOUT_SECONDS > 0.0
+    assert config.CLIENT_MAX_CONNECTIONS > 0
+    assert config.CLIENT_MAX_KEEPALIVE_CONNECTIONS > 0
+
+
+def test_base_path_default(monkeypatch):
+    monkeypatch.delenv("STORAGE_BASE_PATH", raising=False)
+    importlib.reload(config)
+    assert config.BASE_PATH == Path("data")
+
+
+def test_base_path_override(monkeypatch):
     monkeypatch.setenv("STORAGE_BASE_PATH", "/tmp/foo")
-    monkeypatch.setenv("STORAGE_HOST", "1.2.3.4")
-    monkeypatch.setenv("STORAGE_PORT", "9999")
-    monkeypatch.setenv("STORAGE_LOG_FILE", "/tmp/logs/x.log")
-
-    settings = StorageSettings()
-    assert settings.base_path == Path("/tmp/foo")
-    assert settings.host == "1.2.3.4"
-    assert settings.port == 9999
-    assert settings.log_file == Path("/tmp/logs/x.log")
+    importlib.reload(config)
+    assert config.BASE_PATH == Path("/tmp/foo")

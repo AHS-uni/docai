@@ -1,32 +1,59 @@
-# tests/conftest.py
-import importlib
 import pytest
-from fastapi.testclient import TestClient
+import importlib
 
 import docai.storage.config as config_mod
 from docai.storage.storage import StorageService
+from docai.storage.client import StorageClient
 from docai.storage.api import app
 
-
-@pytest.fixture(scope="session")
-def test_client():
-    """A TestClient against the live FastAPI app."""
-    return TestClient(app)
+from httpx import AsyncClient, ASGITransport
 
 
 @pytest.fixture(autouse=True)
 def isolate_storage(tmp_path, monkeypatch):
-    """
-    Redirect BASE_PATH → a fresh tmp_path for every test,
-    reload config & rebind the service in api.py.
-    """
-    # point STORAGE_BASE_PATH env var (so config picks it up if ever reloaded)
+    # 1) Redirect BASE_PATH in config to a fresh tmp_path
     monkeypatch.setenv("STORAGE_BASE_PATH", str(tmp_path))
-    # reload the config module
     importlib.reload(config_mod)
-    # rebind the global StorageService in the API module
+
+    # 2) Rebind the API’s global StorageService to our temp directory
+    new_svc = StorageService(config_mod.BASE_PATH)
     import docai.storage.api as api_mod
 
-    api_mod.s_service = StorageService(config_mod.BASE_PATH)
+    api_mod.s_service = new_svc
+
     yield
-    # cleanup happens automatically with tmp_path
+    # tmp_path is auto-cleaned, no teardown needed
+
+
+@pytest.fixture
+async def api_client():
+    """
+    An httpx.AsyncClient that dispatches to FastAPI via ASGITransport.
+    No real HTTP server needed.
+    """
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        yield client
+
+
+@pytest.fixture
+async def storage_client():
+    """
+    A StorageClient pointed at our in-process API via ASGITransport.
+    """
+    # 1) Create the ASGI-backed HTTPX client
+    transport = ASGITransport(app=app)
+    asgi_httpx = AsyncClient(transport=transport, base_url="http://testserver")
+
+    # 2) Instantiate your StorageClient against the same base_url
+    client = StorageClient("http://testserver")
+    # 3) Tear down its real _client, replace with our ASGI-backed one
+    await client._client.aclose()  # close the real pool
+    client._client = asgi_httpx
+
+    # 4) Yield the patched StorageClient
+    try:
+        yield client
+    finally:
+        # 5) Clean up the ASGI client
+        await client._client.aclose()

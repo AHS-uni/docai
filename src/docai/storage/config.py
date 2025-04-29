@@ -9,7 +9,7 @@ class StorageSettings(BaseSettings):
     variables and an optional .env file.
     """
 
-    version: str = Field(default="0.0.1", description="Version of the storage service")
+    version: str = Field(default="1.0.0", description="Version of the storage service")
     base_path: Path = Field(
         default=Path("data"), description="Base directory for storage"
     )
