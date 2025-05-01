@@ -23,7 +23,7 @@ cd /cluster/users/hlwn057u2/data/docai/
 poetry run python scripts/pdf_benchmark_conversion.py data/pdfs/dr-vorapptchapter1emissionsources-121120210508-phpapp02_95.pdf \
        --max-pages 190 \
        --step 10 \
-       --thread-counts 2 4 8 16 24 \
-       --process-counts 2 4 8 16 24 \
+       --thread-counts 2 4 8 16 20 \
+       --process-counts 2 4 8 16 20 \
        --runs 2 \
        --csv-out dumps/pdf_benchmark_results.csv
