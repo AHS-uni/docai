@@ -1,12 +1,12 @@
-import time
 import logging
+import time
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
-from docai.ingestion.pdf_to_jpg import convert_pdf_to_images
+from docai.config import load_config, load_environment
 from docai.ingestion.id_generator import generate_id
-from docai.ingestion.models import Document, PageImage, DocumentStatus
-from docai.config import load_environment, load_config
+from docai.ingestion.models import Document, DocumentStatus, PageImage
+from docai.ingestion.pdf_to_jpg import convert_pdf_to_images
 from docai.shared.utils.logging_utils import setup_logging
 
 logger = logging.getLogger(__name__)

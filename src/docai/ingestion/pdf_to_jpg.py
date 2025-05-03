@@ -1,6 +1,6 @@
 import logging
-from typing import Tuple, List
 from pathlib import Path
+from typing import List, Tuple
 
 from pdf2image import convert_from_path
 from PIL import Image

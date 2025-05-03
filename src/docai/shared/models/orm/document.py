@@ -1,14 +1,15 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Optional
-from datetime import datetime
 
-from sqlalchemy.sql import func
-from sqlalchemy import String, DateTime, Enum, JSON
+from datetime import datetime
+from typing import TYPE_CHECKING, List, Optional
+
+from sqlalchemy import JSON, DateTime, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from docai.shared.models.domain.document import DocumentStatus
-from docai.shared.models.orm.base import Base
 from docai.shared.models.orm.association import query_document_association
+from docai.shared.models.orm.base import Base
 
 if TYPE_CHECKING:
     from docai.shared.models.orm.page import Page

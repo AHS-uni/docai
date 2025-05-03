@@ -1,14 +1,16 @@
 # tests/unit/test_storage_service.py
-import pytest
 from pathlib import Path
-from docai.storage.storage import StorageService
+
+import pytest
+
 from docai.storage.exceptions import (
-    SavePDFError,
-    SaveImageError,
-    PDFNotFoundError,
-    ImageNotFoundError,
     DeleteDocumentError,
+    ImageNotFoundError,
+    PDFNotFoundError,
+    SaveImageError,
+    SavePDFError,
 )
+from docai.storage.service import StorageService
 
 
 @pytest.fixture

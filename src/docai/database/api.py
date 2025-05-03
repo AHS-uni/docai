@@ -1,13 +1,13 @@
 import logging
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 
-from docai.database.database import DatabaseService
+from docai.database.service import DatabaseService
 from docai.database.schemas import (
     DocumentResponse,
-    QueryResponse,
     ErrorResponse,
+    QueryResponse,
     SQLQueryResponse,
 )
 from docai.database.utils import orm_to_response_document, orm_to_response_query

@@ -1,4 +1,5 @@
-from sqlalchemy import Table, Column, String, ForeignKey
+from sqlalchemy import Column, ForeignKey, String, Table
+
 from docai.shared.models.orm.base import Base
 
 query_document_association = Table(

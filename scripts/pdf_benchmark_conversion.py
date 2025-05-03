@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-import time
-import csv
 import argparse
-import tempfile
+import csv
+import logging
 import shutil
-from pathlib import Path
-from pdf2image import convert_from_path
-from pypdf import PdfReader, PdfWriter
+import tempfile
+import time
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+from pathlib import Path
+
+from pdf2image import convert_from_path
+from pypdf import PdfReader, PdfWriter
 from tqdm import tqdm
-import logging
 
 
 # Configure logging

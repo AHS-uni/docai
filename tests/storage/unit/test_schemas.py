@@ -1,16 +1,17 @@
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 from pydantic import ValidationError
 
+from docai.shared.models.dto.meta import Meta
 from docai.storage.schemas import (
-    SavePDFData,
-    SavePDFResponse,
-    SaveImageData,
-    SaveImageResponse,
     DeleteDocumentData,
     DeleteDocumentResponse,
+    SaveImageData,
+    SaveImageResponse,
+    SavePDFData,
+    SavePDFResponse,
 )
-from docai.shared.models.dto.meta import Meta
 
 
 # ––– SavePDFData –––

@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from docai.database.config import DB_URL, MAX_OVERFLOW, POOL_SIZE
 from docai.database.models import Base
-from docai.database.config import DB_URL, POOL_SIZE, MAX_OVERFLOW
 
 engine = create_engine(
     DB_URL,

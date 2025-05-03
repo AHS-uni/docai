@@ -7,13 +7,14 @@ sequentially or using parallel page-level processing.
 
 from pathlib import Path
 from typing import List
+
 from pdf2image import convert_from_path
 
 from docai.ingestion.config import (
     CONVERSION_DPI,
     CONVERSION_QUALITY,
-    IMAGE_WIDTH,
     IMAGE_HEIGHT,
+    IMAGE_WIDTH,
 )
 from docai.ingestion.exceptions import ConversionError
 

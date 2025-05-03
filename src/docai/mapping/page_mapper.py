@@ -8,16 +8,16 @@ DTOs used for API communication.
 
 import logging
 
-from docai.shared.models.domain.page import Page as DomainPage
-from docai.shared.models.orm.page import Page as ORMPage
-from docai.shared.models.dto.page import Page as DTOPage
 from docai.mapping.base import BaseMapper
 from docai.mapping.exceptions import (
     DomainToDtoError,
-    DtoToDomainError,
     DomainToOrmError,
+    DtoToDomainError,
     OrmToDomainError,
 )
+from docai.shared.models.domain.page import Page as DomainPage
+from docai.shared.models.dto.page import Page as DTOPage
+from docai.shared.models.orm.page import Page as ORMPage
 
 logger = logging.getLogger(__name__)
 

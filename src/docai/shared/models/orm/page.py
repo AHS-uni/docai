@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from docai.shared.models.orm.base import Base
 from docai.shared.models.orm.association import query_page_association
+from docai.shared.models.orm.base import Base
 
 if TYPE_CHECKING:
     from docai.shared.models.orm.document import Document

@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 from docai.shared.models.domain.query import QueryStatus
 from docai.shared.models.dto.meta import Meta

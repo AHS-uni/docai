@@ -5,13 +5,13 @@ Each method manages its own session, commits or rolls back, and logs appropriate
 """
 
 import logging
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
-from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
+from docai.database.models import Document, Page, Query
 from docai.database.session import SessionLocal
-from docai.database.models import Document, Query, Page
 
 logger = logging.getLogger(__name__)
 

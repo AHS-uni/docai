@@ -11,23 +11,19 @@ Exceptions are raised for failures during conversions.
 import logging
 from typing import Optional
 
-from docai.shared.models.domain.document import (
-    Document as DomainDocument,
-    MinimalDocument as DomainMinDocument,
-)
-from docai.shared.models.orm.document import Document as ORMDocument
-from docai.shared.models.dto.document import (
-    Document as DTODocument,
-    MinimalDocument as DTOMinimalDocument,
-)
 from docai.mapping.base import BaseMapper
-from docai.mapping.page_mapper import PageMapper
 from docai.mapping.exceptions import (
     DomainToDtoError,
-    DtoToDomainError,
     DomainToOrmError,
+    DtoToDomainError,
     OrmToDomainError,
 )
+from docai.mapping.page_mapper import PageMapper
+from docai.shared.models.domain.document import Document as DomainDocument
+from docai.shared.models.domain.document import MinimalDocument as DomainMinDocument
+from docai.shared.models.dto.document import Document as DTODocument
+from docai.shared.models.dto.document import MinimalDocument as DTOMinimalDocument
+from docai.shared.models.orm.document import Document as ORMDocument
 
 logger = logging.getLogger(__name__)
 

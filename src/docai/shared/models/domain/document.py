@@ -1,8 +1,8 @@
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from enum import Enum
-from typing import List, Optional, Any, Dict
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from docai.shared.models.domain.page import Page
 

@@ -8,21 +8,20 @@ different layers of the application, including support for linking documents and
 import logging
 from typing import Optional
 
-from docai.shared.models.domain.query import (
-    Query as DomainQuery,
-    MinimalQuery as DomainMinQuery,
-)
-from docai.shared.models.orm.query import Query as ORMQuery
-from docai.shared.models.dto.query import Query as DTOQuery, MinimalQuery as DTOMinimalQuery
+from docai.database.database import DatabaseService
 from docai.mapping.base import BaseMapper
 from docai.mapping.exceptions import (
     DomainToDtoError,
-    DtoToDomainError,
     DomainToOrmError,
+    DtoToDomainError,
     OrmToDomainError,
 )
 from docai.mapping.utils import link_documents_to_query, link_pages_to_query
-from docai.database.database import DatabaseService
+from docai.shared.models.domain.query import MinimalQuery as DomainMinQuery
+from docai.shared.models.domain.query import Query as DomainQuery
+from docai.shared.models.dto.query import MinimalQuery as DTOMinimalQuery
+from docai.shared.models.dto.query import Query as DTOQuery
+from docai.shared.models.orm.query import Query as ORMQuery
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,12 @@
-import time
 import asyncio
-import pytest
+import time
+from pathlib import Path
+
 import aiofiles
 import aiofiles.os
+import pytest
 
-from pathlib import Path
-from docai.storage.storage import StorageService
+from docai.storage.service import StorageService
 
 
 @pytest.fixture

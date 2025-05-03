@@ -1,0 +1,58 @@
+@startuml
+title Document Ingestion System Sequence Diagram
+header Document Upload and Processing
+
+autonumber
+
+actor User
+
+participant "MasterService" as MS
+participant "IngestionService" as IS
+participant "DocumentProcessor" as DP
+participant "StorageClient" as SC
+participant "Converter" as CVT
+participant "Worker" as BW
+participant "DatabaseClient" as DBC
+
+'--- Upload Phase ---
+MS -> IS: Send Raw Document Data (via Message Queue)
+activate IS
+IS -> DP: Forward Document Request
+activate DP
+DP -> DP: Create Document Object {state:created}
+DP --> IS: Return New Document Object
+IS --> MS: Send Minimal Document Object for Tracking
+DP -> SC: Upload Raw File to Storage
+activate SC
+SC --> DP: File Upload Acknowledgment
+deactivate SC
+
+
+'--- Processing Phase ---
+DP -> DP: Push {doc_id} to Processing Queue
+DP -> CVT: Document Conversion Request
+activate CVT
+note right of CVT: Documents possibly processed in batches?
+CVT -> BW: Dispatch Conversion Worker
+activate BW
+BW -> BW: Convert Document to Page Images
+note right of BW: Page images saved to a temporary directory
+BW --> CVT: Return Page Image Paths
+deactivate BW
+CVT --> DP: Return Image Paths
+deactivate CVT
+DP -> SC: Upload Page Images to Storage
+activate SC
+SC -> DP: Page Upload Acknowledgment
+deactivate SC
+DP -> DP: Create Page Objects for Document
+DP -> DP: Add Pages to Document Object
+DP -> DP: Update Document State {created --> processed}
+DP -> DBC: Presist Document Object
+activate DBC
+DBC --> DP: Acknowledgement
+DP --> IS: Return Processed Document Object
+deactivate DP
+IS --> MS: Send Updated Minimal Document Object for Tracking
+deactivate DBC
+@enduml

@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
+from typing import Any, Dict, Optional, Union
+
 import yaml
 from dotenv import load_dotenv
-from typing import Any, Dict, Optional, Union
 
 _config: Any = None
 

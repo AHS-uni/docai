@@ -2,10 +2,18 @@ from typing import List
 
 from pydantic import BaseModel, Field
 
-from docai.shared.models.dto.meta import Meta
 from docai.shared.models.dto.error import ErrorResponse
+from docai.shared.models.dto.meta import Meta
 
-__all__ = ["ErrorResponse"]
+__all__ = [
+    "ErrorResponse",
+    "SavePDFData",
+    "SavePDFResponse",
+    "SaveImageData",
+    "SaveImageResponse",
+    "DeleteDocumentData",
+    "DeleteDocumentResponse",
+]
 
 
 class SavePDFData(BaseModel):

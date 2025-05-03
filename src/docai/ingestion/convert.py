@@ -1,7 +1,8 @@
-from pathlib import Path
-from typing import List, Optional
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+from typing import List, Optional
+
 from pypdf import PdfReader
 
 from docai.ingestion.config import (
@@ -9,11 +10,11 @@ from docai.ingestion.config import (
     MAX_FILE_SIZE_MB,
     PAGE_THRESHOLD,
 )
+from docai.ingestion.exceptions import ConversionError
 from docai.ingestion.workers import (
     _sync_convert_parallel_pages,
     _sync_convert_sequential,
 )
-from docai.ingestion.exceptions import ConversionError
 
 
 class Converter:

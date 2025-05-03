@@ -1,8 +1,8 @@
 import logging
 from typing import List
 
-from docai.database.models import Query as ORMQuery
 from docai.database.database import DatabaseService
+from docai.database.models import Query as ORMQuery
 from docai.mapping.exceptions import LinkDocumentsError, LinkPagesError
 
 logger = logging.getLogger(__name__)

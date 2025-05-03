@@ -1,8 +1,8 @@
 import asyncio
 from pathlib import Path
 
-import pytest
 import httpx
+import pytest
 
 # fixtures from tests/storage/conftest.py:
 #  - storage_client

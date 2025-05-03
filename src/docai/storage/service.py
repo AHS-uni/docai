@@ -13,6 +13,7 @@ from typing import List, Optional
 import aiofiles
 import aiofiles.os
 
+from docai.storage.config import LOCK_STRIPES
 from docai.storage.exceptions import (
     DeleteDocumentError,
     ImageNotFoundError,
@@ -20,7 +21,6 @@ from docai.storage.exceptions import (
     SaveImageError,
     SavePDFError,
 )
-from docai.storage.config import LOCK_STRIPES
 
 logger = logging.getLogger(__name__)
 

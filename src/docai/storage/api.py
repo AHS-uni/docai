@@ -5,35 +5,33 @@ This module defines endpoints for saving, retrieving, and deleting PDF files and
 page images associated with documents. It uses an asynchronous file storage service.
 """
 
-import uvicorn
 import logging
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Query
+import uvicorn
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 
-from docai.storage.config import BASE_PATH, HOST, PORT, LOG_FILE
 from docai.shared.models.dto.meta import Meta
-from docai.storage.schemas import (
-    SavePDFResponse,
-    SavePDFData,
-    SaveImageResponse,
-    SaveImageData,
-    DeleteDocumentResponse,
-    DeleteDocumentData,
-    ErrorResponse,
-)
-from docai.storage.storage import StorageService
-from docai.storage.exceptions import (
-    SavePDFError,
-    SaveImageError,
-    PDFNotFoundError,
-    ImageNotFoundError,
-    DeleteDocumentError,
-)
 from docai.shared.utils.logging_utils import setup_logging
-from docai.storage.config import VERSION
-
+from docai.storage.config import BASE_PATH, HOST, LOG_FILE, PORT, VERSION
+from docai.storage.exceptions import (
+    DeleteDocumentError,
+    ImageNotFoundError,
+    PDFNotFoundError,
+    SaveImageError,
+    SavePDFError,
+)
+from docai.storage.schemas import (
+    DeleteDocumentData,
+    DeleteDocumentResponse,
+    ErrorResponse,
+    SaveImageData,
+    SaveImageResponse,
+    SavePDFData,
+    SavePDFResponse,
+)
+from docai.storage.service import StorageService
 
 # Initialize logging
 setup_logging(LOG_FILE)

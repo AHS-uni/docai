@@ -1,12 +1,12 @@
-import pytest
 import importlib
 
-import docai.storage.config as config_mod
-from docai.storage.storage import StorageService
-from docai.storage.client import StorageClient
-from docai.storage.api import app
+import pytest
+from httpx import ASGITransport, AsyncClient
 
-from httpx import AsyncClient, ASGITransport
+import docai.storage.config as config_mod
+from docai.storage.api import app
+from docai.storage.client import StorageClient
+from docai.storage.service import StorageService
 
 
 @pytest.fixture(autouse=True)

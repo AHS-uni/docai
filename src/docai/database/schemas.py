@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional, List, Any
+from typing import Any, List, Optional
+
 from pydantic import BaseModel, Field
+
 from docai.shared.models.document import DocumentStatus
 from docai.shared.models.query import QueryStatus
-
 
 # --- Pure DTO Models --- #
 

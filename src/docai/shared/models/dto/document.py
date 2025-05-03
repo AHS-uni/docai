@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
 
+from pydantic import BaseModel, Field
+
 from docai.shared.models.domain.document import DocumentStatus
-from docai.shared.models.dto.page import Page
 from docai.shared.models.dto.meta import Meta
+from docai.shared.models.dto.page import Page
 
 
 class Document(BaseModel):

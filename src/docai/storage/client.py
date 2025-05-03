@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Union, IO, Optional
+from typing import IO, Optional, Union
 
 import httpx
 from httpx import AsyncHTTPTransport

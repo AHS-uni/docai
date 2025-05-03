@@ -1,11 +1,11 @@
+import asyncio
 import io
 import time
 from pathlib import Path
 
+import httpx
 import pytest
 import respx
-import asyncio
-import httpx
 from httpx import ReadTimeout
 
 from docai.storage.client import StorageClient

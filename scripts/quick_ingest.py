@@ -1,6 +1,7 @@
-import os
 import argparse
 import logging
+import os
+
 from pdf2image import convert_from_path
 
 

@@ -1,4 +1,5 @@
 from typing import List
+
 from pydantic import BaseModel, Field
 
 from docai.shared.models.dto.meta import Meta
