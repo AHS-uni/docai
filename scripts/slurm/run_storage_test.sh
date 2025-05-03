@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=4G
-#SBATCH --time=00:10:00
+#SBATCH --time=00:30:00
 #SBATCH --output=/cluster/users/hlwn057u2/data/logs/slurm/storage_test_%j.log
 #SBATCH --error=/cluster/users/hlwn057u2/data/logs/slurm/storage_test_%j.err
 
