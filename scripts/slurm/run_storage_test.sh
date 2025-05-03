@@ -52,28 +52,4 @@ echo "[test] PDF size is $size bytes"
 # Run the Python client — note ARG BEFORE EOF
 echo "[test] launching client against $storage_addr"
 set -x
-poetry run python - "$storage_addr" <<EOF
-import asyncio, pathlib, sys, traceback
-from docai.storage.client import StorageClient
-
-print("[py] sys.argv:", sys.argv)
-endpoint = sys.argv[1]
-
-pdf = pathlib.Path("$PDF_FILE")
-print(f"[py] PDF path: {pdf} (exists={pdf.exists()}, size={pdf.stat().st_size})")
-
-async def smoke(ep):
-    print(f"[py] Uploading to http://{ep}")
-    async with StorageClient(f"http://{ep}") as client:
-        await client.save_pdf("real_doc", pdf)
-        print("✓ uploaded real PDF")
-        await client.delete_document("real_doc")
-        print("✓ deleted real PDF")
-
-try:
-    asyncio.run(smoke(endpoint))
-except Exception:
-    print("[py][ERROR] exception in smoke()", file=sys.stderr)
-    traceback.print_exc()
-    sys.exit(1)
-EOF
+poetry run python scripts/storage_test.py "$storage_addr"
