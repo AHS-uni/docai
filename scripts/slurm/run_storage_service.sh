@@ -18,7 +18,7 @@ cd /cluster/users/hlwn057u2/data/docai/
 
 # Pick a high port and publish the address (FIXED: typo in username)
 export STORAGE_PORT=$((7000 + RANDOM % 1000))
-export STORAGE_HOST=$(hostname -f)
+export STORAGE_HOST=$(hostname -I | awk '{print $1}')
 echo "${STORAGE_HOST}:${STORAGE_PORT}" \
      >  "/cluster/users/hlwn057u2/data/storage.addr"
 
