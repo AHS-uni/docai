@@ -18,7 +18,7 @@ conda activate "/cluster/users/hlwn057u2/.conda/envs/dev-env"
 PROJECT_ROOT="/cluster/users/hlwn057u2/data/docai"
 SHARED_DIR="/cluster/users/hlwn057u2/data"
 ADDR_FILE="${SHARED_DIR}/storage.addr"
-PDF_FILE="${PROJECT_ROOT}/data/pdfs/2411.04952v1.pdf"
+PDF_FILE="${PROJECT_ROOT}/tests/resources/sample_1.pdf"
 
 # cd into project
 cd "$PROJECT_ROOT"
