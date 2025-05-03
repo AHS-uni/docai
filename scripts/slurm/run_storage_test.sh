@@ -20,7 +20,6 @@ SHARED_DIR="/cluster/users/hlwn057u2/data"
 ADDR_FILE="${SHARED_DIR}/storage.addr"
 PDF_FILE="${PROJECT_ROOT}/tests/resources/sample_1.pdf"
 
-# cd into project
 cd "$PROJECT_ROOT"
 
 # Wait up to 5 minutes for storage.addr to appear
@@ -41,6 +40,17 @@ fi
 storage_addr=$(<"$ADDR_FILE")
 echo "[test] discovered storage addr = $storage_addr"
 
+# Connectivity check (basic TCP probe)
+host=${storage_addr%%:*}
+port=${storage_addr##*:}
+echo "[test] testing TCP connectivity to $host:$port"
+if timeout 3 bash -c "</dev/tcp/$host/$port" &>/dev/null; then
+    echo "[test] ✅ TCP port is open!"
+else
+    echo "[test][ERROR] ❌ Cannot connect to $host:$port — port closed or blocked." >&2
+    exit 2
+fi
+
 # Verify the PDF exists
 if [[ ! -f "$PDF_FILE" ]]; then
     echo "[test][ERROR] PDF not found at $PDF_FILE" >&2
@@ -49,7 +59,7 @@ fi
 size=$(stat -c%s "$PDF_FILE")
 echo "[test] PDF size is $size bytes"
 
-# Run the Python client — note ARG BEFORE EOF
+# Run the Python client
 echo "[test] launching client against $storage_addr"
 set -x
 poetry run python scripts/storage_test.py "$storage_addr"
